@@ -1,10 +1,13 @@
-export const getData = (req, res) => {
-  res.status(200);
-  const sampleData = {
-    message: "This is some sample data from the backend!",
-    timestamp: new Date(),
-  };
-  res.json(sampleData);
+import Survey from "../models/survey.js";
+export const getData = async (req, res) => {
+  try {
+    const surveys = await Survey.find();
+    // res.status(200).json(survey  s);
+    res.json({ status: "success", surveys });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+    console.error("Error fetching surveys:", error);
+  }
 };
 export const postData = (req, res) => {
   const receivedData = req.body;
