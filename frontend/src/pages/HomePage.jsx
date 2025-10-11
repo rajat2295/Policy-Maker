@@ -5,15 +5,21 @@ import { GridItem } from "../components/GridItem";
 import { AreaChart } from "../components/AreaChart";
 import { BarGraph } from "../components/BarGraph";
 import { StackedGraph } from "../components/StackedGraph";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export const HomePage = () => {
   const [surveys, setSurveys] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const { user } = useAuthContext();
   useEffect(() => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
       try {
-        const res = await axios.get("http://localhost:3000/api/surveys");
+        const res = await axios.get("http://localhost:3000/api/surveys", {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
         const data = res.data;
         console.log(data.surveys);
         setSurveys(data.surveys); // Adjust based on your API response structure
@@ -23,8 +29,10 @@ export const HomePage = () => {
         setLoading(false);
       }
     };
-    fetchSurveys();
-  }, []);
+    if (user) {
+      fetchSurveys();
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen min-w-full bg-gradient-to-b from-slate-800 to-slate-900 text-white">
