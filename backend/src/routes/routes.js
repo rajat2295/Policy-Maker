@@ -5,13 +5,21 @@ import {
   putData,
   deleteData,
 } from "../controllers/baseController.js";
-import { loginUser, signupUser } from "../controllers/userController.js";
+import {
+  loginUser,
+  signupUser,
+  verifyRefId,
+  verifyEmail,
+} from "../controllers/userController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
-
 const router = express.Router();
+
+router.post("/verifyrefid", verifyRefId);
+router.post("/verifyemail", verifyEmail);
 // protected routes
 router.post("/login", loginUser);
 router.post("/signup", signupUser);
+
 router.use(requireAuth);
 // CRUD routes
 router.get("/", getData);

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useSignup } from "../hooks/useSignup";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+
 export const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -8,17 +11,19 @@ export const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await signup(email, password);
-    // console.log(email, password);
-    // const response = await fetch("http://localhost:3000/api/user/signup", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ email, password }),
-    // });
-    // const json = await response.json();
-    // console.log(json);
   };
+
+  const googleSuccess = async (res) => {
+    console.log(res);
+    response = res ? console.log(jwtDecode(res.credential)) : "";
+    console.log(response);
+    // localStorage.setItem("user", JSON.stringify(res));
+    // // update the auth context
+    await signup(email, password, refId, res.credential);
+    // dispatch({ type: "LOGIN", payload: res });
+  };
+
+  const [refId, setRefId] = useState("");
 
   return (
     <div>
@@ -36,7 +41,23 @@ export const SignUp = () => {
           onChange={(e) => setPassword(e.target.value)}
           value={password}
         />
+        <label>Reference ID:</label>
+        <input
+          type="text"
+          onChange={(e) => setRefId(e.target.value)}
+          value={refId}
+        />
         <button disabled={isLoading}>Sign Up</button>
+        <GoogleLogin
+          disabled={!refId}
+          onSuccess={(credentialResponse) => {
+            googleSuccess(credentialResponse);
+          }}
+          onError={() => {
+            console.log("Login Failed");
+          }}
+        />
+
         {error && <div className="error">{error}</div>}
       </form>
     </div>

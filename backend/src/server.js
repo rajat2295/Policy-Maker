@@ -10,6 +10,7 @@ const app = express();
 app.use(cors({ origin: "http://localhost:5173" })); // Adjust the origin as needed
 app.use(express.json());
 connectDB();
+app.use("/api/auth", routes);
 app.use("/api/surveys", routes);
 app.use("/api/user", routes);
 

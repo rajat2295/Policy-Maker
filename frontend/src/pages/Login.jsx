@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { useLogin } from "../hooks/useLogin";
+import { GoogleLogin } from "@react-oauth/google";
+import { useAuthContext } from "../hooks/useAuthContext";
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, error, isLoading } = useLogin();
-
+  const { login, loginWithGoogle, error, isLoading } = useLogin();
+  const { dispatch } = useAuthContext();
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(email, password);
+  };
+  const googleSuccess = async (res) => {
+    await loginWithGoogle(res.credential);
   };
 
   return (
@@ -27,6 +32,14 @@ export const Login = () => {
           value={password}
         />
         <button disabled={isLoading}>Log in</button>
+        <GoogleLogin
+          onSuccess={(credentialResponse) => {
+            googleSuccess(credentialResponse);
+          }}
+          onError={() => {
+            console.log("Login Failed");
+          }}
+        />
         {error && <div className="error">{error}</div>}
       </form>
     </div>
