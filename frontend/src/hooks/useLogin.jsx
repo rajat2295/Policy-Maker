@@ -36,6 +36,7 @@ export const useLogin = () => {
     } else {
       setError("Google email not verified");
     }
+    setIsLoading(false);
   };
   const login = async (email, password) => {
     setIsLoading(true);

@@ -1,6 +1,20 @@
 import { User, createToken } from "../models/userModel.js";
 import { Auth } from "../models/authModel.js";
 // login user controller
+const signupWithGoogle = async (req, res) => {
+  const { refId, email } = req.body;
+
+  try {
+    await Auth.verifyRefId(refId);
+    const auth = await Auth.exhaustRefId(refId, email);
+    const token = createToken(auth._id);
+    res.status(200).json({ email, token });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+  //   res.json({ message: "User registered successfully" });
+};
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -17,6 +31,8 @@ const loginUser = async (req, res) => {
 const signupUser = async (req, res) => {
   const { email, password, refId } = req.body;
   try {
+    await Auth.verifyRefId(refId);
+    await Auth.exhaustRefId(refId, email);
     const user = await User.signup(email, password);
     // create a token
     const token = createToken(user._id);
@@ -58,4 +74,4 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-export { loginUser, signupUser, verifyRefId, verifyEmail };
+export { loginUser, signupUser, verifyRefId, verifyEmail, signupWithGoogle };

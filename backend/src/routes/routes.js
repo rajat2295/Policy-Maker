@@ -10,12 +10,15 @@ import {
   signupUser,
   verifyRefId,
   verifyEmail,
+  signupWithGoogle,
 } from "../controllers/userController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 const router = express.Router();
 
 router.post("/verifyrefid", verifyRefId);
 router.post("/verifyemail", verifyEmail);
+router.post("/google-signup", signupWithGoogle);
+
 // protected routes
 router.post("/login", loginUser);
 router.post("/signup", signupUser);

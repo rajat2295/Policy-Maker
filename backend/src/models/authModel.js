@@ -58,6 +58,18 @@ authSchema.statics.verifyRefId = async function (ref_id) {
     throw new Error("Reference ID is invalid ");
   }
 };
+authSchema.statics.exhaustRefId = async function (ref_id, email) {
+  // validation
+
+  const existingref = await this.findOne({ ref_id });
+  if (existingref && existingref.used === false && !existingref.email) {
+    existingref.used = true;
+    existingref.email = email;
+    await existingref.save();
+    return existingref; // if ref id exists and is used by the same email, return true
+  }
+  throw new Error("Reference ID is invalid or already used");
+};
 authSchema.statics.verifyEmail = async function (email) {
   // validation
   if (!email) {

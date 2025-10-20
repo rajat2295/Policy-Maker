@@ -1,10 +1,18 @@
 import React from "react";
 
-export const GridItem = ({ title, children }) => {
+export const GridItem = ({ title, size = "small", children }) => {
   return (
-    <div className="flex flex-col gap-2 p-4 border rounded shadow bg-slate-900/50 h-[400px]">
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <section
+      className={`flex flex-col p-6 border border-gray-200 rounded-xl shadow-sm bg-white h-[${
+        size == "small" ? "50vh" : "70vh"
+      }] focus-within:ring-2 focus-within:ring-blue-600 transition-shadow`}
+      aria-label={title}
+      tabIndex={0}
+    >
+      <h2 className="text-lg font-bold text-gray-900 mb-2 tracking-tight">
+        {title}
+      </h2>
       <div className="flex-grow overflow-y-auto">{children}</div>
-    </div>
+    </section>
   );
 };

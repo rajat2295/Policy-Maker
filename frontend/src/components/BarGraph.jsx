@@ -1,81 +1,93 @@
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import {
-  AreaChart,
   ResponsiveContainer,
   YAxis,
   Tooltip,
-  Legend,
   Bar,
   BarChart,
   XAxis,
-  Rectangle,
   CartesianGrid,
-  Text,
+  ReferenceLine,
 } from "recharts";
-export const BarGraph = ({ data, column = "how_often_use" }) => {
-  const [howOften, setHowOften] = React.useState([]);
-  useEffect(() => {
+
+// Helper to compute median from an array
+const calcMedian = (arr) => {
+  if (!arr.length) return 0;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+  return sorted[mid];
+};
+
+export const BarGraph = ({
+  data,
+  column = "how_often_use",
+  orientation = "horizontal", // "horizontal" or "vertical"
+  showReferenceLine = false,
+}) => {
+  // Prepare chart data and compute median
+  const { chartData, median } = useMemo(() => {
     let frequency = {};
-    if (howOften.length) return;
-    const temp = [];
-    // console.log("data", data);
+    let valueArray = [];
+
     data.forEach((survey) => {
-      if (survey[column]) {
-        frequency[survey[column]] = frequency[survey[column]]
-          ? frequency[survey[column]] + 1
-          : 1;
+      if (survey[column] !== undefined && survey[column] !== null) {
+        frequency[survey[column]] = (frequency[survey[column]] || 0) + 1;
+        valueArray.push(Number(survey[column]));
       }
     });
-    console.log("frequency", frequency);
-    const total = Object.values(frequency).reduce((a, b) => a + b, 0);
-    Object.keys(frequency).forEach((key) => {
-      frequency[key] = ((frequency[key] / total) * 100).toFixed(2);
-    });
-    Object.keys(frequency).forEach((key) => {
-      temp.push({ name: key, percentage: frequency[key] });
-    });
-    console.log("temp", temp);
 
-    setHowOften([...temp]);
-    // setHowOften();
-    // console.log("howOften", howOften
-  }, [data]);
-  //   console.log("howOften", howOften);
+    let chartArray = Object.keys(frequency).map((key) => ({
+      name: key,
+      count: frequency[key],
+    }));
+
+    chartArray.sort((a, b) => a.count - b.count);
+    const medianValue = calcMedian(valueArray);
+    return { chartData: chartArray, median: medianValue };
+  }, [data, column]);
+
+  if (chartData.length === 0) {
+    return <p>No data available</p>;
+  }
+
+  const isHorizontal = orientation === "horizontal";
 
   return (
-    <ResponsiveContainer width="100%" height="95%">
-      <BarChart
-        width={500}
-        height={100}
-        data={howOften}
-        margin={{
-          top: 5,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <XAxis dataKey="name" tick={{ fill: "white" }} />
-        <YAxis unit="%" tick={{ fill: "white" }} yAxisId="left" />
-        <Tooltip
-          cursor={{ stroke: "#d9ed92", strokeWidth: 4 }}
-          contentStyle={{ color: "yellow", stroke: "blue" }}
-          labelStyle={{ color: "green", fontSize: 12 }}
-        />
-        <CartesianGrid yAxisId="left" />
-
-        {/* <Legend /> */}
-        <Bar
-          yAxisId="left"
-          dataKey="percentage"
-          fill="#168aad"
-          unit="%"
-          padding={{ left: 20, right: 20 }}
-          activeBar={
-            <Rectangle color="#b5e48c" fill="#52b69a" stroke="#1a759f" />
-          }
-        />
-      </BarChart>
-    </ResponsiveContainer>
+    <div
+      className="w-full h-full"
+      style={{ background: "#fff", borderRadius: 12, padding: 16 }}
+    >
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={chartData}
+          layout={isHorizontal ? "vertical" : "horizontal"}
+          margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
+        >
+          <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+          {isHorizontal ? (
+            <>
+              <XAxis type="number" />
+              <YAxis dataKey="name" type="category" width={140} />
+              {showReferenceLine && (
+                <ReferenceLine y={median} stroke="red" strokeWidth={3} />
+              )}
+            </>
+          ) : (
+            <>
+              <XAxis dataKey="name" type="category" />
+              <YAxis type="number" />
+              {showReferenceLine && (
+                <ReferenceLine y={median} stroke="red" strokeWidth={3} />
+              )}
+            </>
+          )}
+          <Tooltip formatter={(value) => value} />
+          <Bar dataKey="count" fill="#2563eb" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
