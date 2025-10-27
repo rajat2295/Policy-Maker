@@ -7,7 +7,7 @@ import { connectDB } from "./config/db.js";
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
-app.use(cors({ origin: import.meta.env.VITE_REACT_APP_FRONTEND_BASEURL })); // Adjust the origin as needed
+app.use(cors({ origin: process.env.VITE_REACT_APP_FRONTEND_BASEURL })); // Adjust the origin as needed
 app.use(express.json());
 connectDB();
 app.use("/api/auth", routes);
