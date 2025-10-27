@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
-
+import { CustomTooltip } from "./CustomTooltip";
 // Helper to compute median
 const calcMedian = (arr) => {
   if (!arr.length) return 0;
@@ -86,15 +86,15 @@ export const BarGraph = ({
                 unit="%"
                 domain={[0, domainMax]}
                 tickFormatter={(tick) => `${tick}`}
-                tick={{ fontWeight: 600, fill: "#1e293b" }}
+                tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
               <YAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontWeight: 600, fill: "#1e293b" }}
+                tick={{ fontWeight: 500, fill: "#1e293b" }}
                 width={140}
               />
-              <Tooltip formatter={(value) => `${value}%`} />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="percentage" fill="#184e77" />
               {showReferenceLine && (
                 <ReferenceLine
@@ -105,7 +105,7 @@ export const BarGraph = ({
                     position: "top",
                     value: "Median",
                     fill: "#d32f2f",
-                    fontWeight: 600,
+                    fontWeight: 500,
                   }}
                 />
               )}
@@ -115,16 +115,16 @@ export const BarGraph = ({
               <XAxis
                 dataKey="name"
                 type="category"
-                tick={{ fontWeight: 600, fill: "#1e293b" }}
+                tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
               <YAxis
                 type="number"
                 unit="%"
                 domain={[0, domainMax]}
                 tickFormatter={(tick) => `${tick}%`}
-                tick={{ fontWeight: 600, fill: "#1e293b" }}
+                tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
-              <Tooltip formatter={(value) => `${value}%`} />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="percentage" fill="#184e77" />
               {showReferenceLine && (
                 <ReferenceLine
@@ -135,7 +135,7 @@ export const BarGraph = ({
                     position: "right",
                     value: "Median",
                     fill: "#d32f2f",
-                    fontWeight: 600,
+                    fontWeight: 500,
                   }}
                 />
               )}

@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
-
+import { CustomTooltip } from "./CustomTooltip";
 const calcMedian = (arr) => {
   if (!arr.length) return 0;
   const sorted = arr.slice().sort((a, b) => a - b);
@@ -124,7 +124,7 @@ export const Histogram = ({
           margin={{ top: 5, right: 30, left: 60, bottom: 32 }}
         >
           <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-          <Tooltip formatter={(value) => value} />
+          <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="count" fill="#184e77" />
           <XAxis
             dataKey="name"
