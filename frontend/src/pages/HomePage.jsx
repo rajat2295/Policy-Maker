@@ -99,7 +99,7 @@ export const HomePage = () => {
     setFilteredSurveyData(filteredOriginalRows);
     setSelectedCountries(selected);
   };
-  console.log("Filtered Survey Data:", filteredSurveyData);
+  // console.log("Filtered Survey Data:", filteredSurveyData);
   // Check if we have enough data to show graphs
   const hasEnoughData = filteredSurveyData.length >= MIN_SURVEY_COUNT;
 
@@ -251,7 +251,11 @@ export const HomePage = () => {
                     </h2>
                     <div className="space-y-8">
                       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem title="How often policy makers learn about academic economic research">
+                        <GridItem
+                          title="How often policy makers learn about academic economic research"
+                          caption="How often would you say you learn about a piece of academic economic research?
+For example, you hear about some research an economics professor did on a podcast."
+                        >
                           <BarGraph
                             data={filteredSurveyData}
                             column="how_often_learn"
@@ -260,7 +264,10 @@ export const HomePage = () => {
                       </div>
 
                       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem title="How often policymakers use academic economic research">
+                        <GridItem
+                          title="How often policymakers use academic economic research"
+                          caption="How often would you say you use a piece of academic economic research as part of your policy work?"
+                        >
                           <BarGraph
                             data={filteredSurveyData}
                             column="how_often_use"
@@ -269,7 +276,10 @@ export const HomePage = () => {
                       </div>
 
                       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem title="How often policymakers can engage open-mindedly">
+                        <GridItem
+                          title="How often policymakers can engage open-mindedly"
+                          caption="Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?"
+                        >
                           <BarGraph
                             data={filteredSurveyData}
                             column="foregone_conclusion"
@@ -281,6 +291,8 @@ export const HomePage = () => {
                         <GridItem
                           size="large"
                           title="Reasons for not reading academic research"
+                          caption="Please rank, in order from most to least important, the reasons why you don’t read more academic economics research.
+Please click on each topic and move it to the preferred position in the ranking."
                         >
                           <StackedGraph
                             data={filteredSurveyData}
@@ -305,6 +317,7 @@ export const HomePage = () => {
                       <GridItem
                         size="large"
                         title="Reasons for not reading academic research"
+                        caption="Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:"
                       >
                         <StackedGraph
                           data={filteredSurveyData}
@@ -312,7 +325,12 @@ export const HomePage = () => {
                         />
                       </GridItem>
                       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem title="Policymakers preferences for academic economists to reach out">
+                        <GridItem
+                          title="Policymakers preferences for academic economists to reach out"
+                          caption="Hypothetically, would you like it if academic economists in relevant fields reached out to you more often to share their research?
+
+Please note: your answer will not affect the volume or frequency of emails you get from us or anyone else. We will not share identifiable individual answers with anyone."
+                        >
                           <BarGraph
                             data={filteredSurveyData}
                             column="reach_out"
@@ -333,7 +351,11 @@ export const HomePage = () => {
                       The type of research policymakers want
                     </h2>
                     <div className="space-y-8">
-                      <GridItem title="Policymaker preferences for research on new/proposed versus existing policies">
+                      <GridItem
+                        caption="Existing or new policies:
+As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?"
+                        title="Policymaker preferences for research on new/proposed versus existing policies"
+                      >
                         <Histogram
                           data={filteredSurveyData}
                           column="new_existing_1"
@@ -343,7 +365,11 @@ export const HomePage = () => {
                           extremeRightLabel="New policies"
                         />
                       </GridItem>
-                      <GridItem title="Policymaker preferences for interdisciplinary research">
+                      <GridItem
+                        title="Policymaker preferences for interdisciplinary research"
+                        caption="Less vs more multidisciplinary:
+Would you be more likely to use this research if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?"
+                      >
                         <Histogram
                           data={filteredSurveyData}
                           orientation="vertical"
@@ -353,7 +379,11 @@ export const HomePage = () => {
                           extremeRightLabel="Economics only"
                         />
                       </GridItem>
-                      <GridItem title="Policymaker preferences for meta-analyses versus original work">
+                      <GridItem
+                        title="Policymaker preferences for meta-analyses versus original work"
+                        caption="Review papers vs novel ideas:
+As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?"
+                      >
                         <Histogram
                           data={filteredSurveyData}
                           orientation="vertical"
@@ -363,7 +393,7 @@ export const HomePage = () => {
                           extremeRightLabel="Novel ideas"
                         />
                       </GridItem>
-                      <GridItem title="Policymaker ratings of how valuable different conceptual categories of research are">
+                      {/* <GridItem title="Policymaker ratings of how valuable different conceptual categories of research are">
                         <Histogram
                           data={filteredSurveyData}
                           orientation="vertical"
@@ -376,7 +406,7 @@ export const HomePage = () => {
                           data={filteredSurveyData}
                           column="new_existing_1"
                         />
-                      </GridItem>
+                      </GridItem> */}
                     </div>
                   </>
                 ) : (

@@ -30,24 +30,47 @@ const ExtremeLabelTick = ({
   extremeRightLabel,
 }) => {
   const value = payload.value;
-  const isFirst = value === ticks[0];
-  const isLast = value === ticks[ticks.length - 1];
+  const isFirst = value === ticks[1];
+  const isLast = value === ticks[ticks.length - 2];
+
   return (
     <g>
+      {/* Main tick value (number) */}
       <text
         x={x}
-        y={y + 18}
+        y={y + 15}
         textAnchor="middle"
         fill="#1e293b"
-        fontWeight={700}
-        fontSize={16}
+        fontWeight={600}
+        fontSize={15}
       >
-        {isFirst && extremeLeftLabel
-          ? extremeLeftLabel
-          : isLast && extremeRightLabel
-          ? extremeRightLabel
-          : value}
+        {value}
       </text>
+      {/* Extreme labels, pushed further down */}
+      {isFirst && extremeLeftLabel && (
+        <text
+          x={x}
+          y={y + 45} // push further below the tick value
+          textAnchor="end"
+          fill="#22223b"
+          fontWeight={500}
+          fontSize={18}
+        >
+          {extremeLeftLabel}
+        </text>
+      )}
+      {isLast && extremeRightLabel && (
+        <text
+          x={x}
+          y={y + 45} // push further below the tick value
+          textAnchor="start"
+          fill="#22223b"
+          fontWeight={500}
+          fontSize={18}
+        >
+          {extremeRightLabel}
+        </text>
+      )}
     </g>
   );
 };
@@ -102,12 +125,12 @@ export const Histogram = ({
         >
           <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
           <Tooltip formatter={(value) => value} />
-          <Bar dataKey="count" fill="#2563eb" />
+          <Bar dataKey="count" fill="#184e77" />
           <XAxis
             dataKey="name"
             type="number"
             ticks={uniqueTicks}
-            domain={[minTick, maxTick]}
+            domain={["auto", "auto"]}
             interval={0}
             allowDuplicatedCategory={false}
             tick={(props) =>
