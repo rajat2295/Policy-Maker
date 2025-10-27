@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
-import { ExtremeLabelTick } from "./ExtremeLabelTick.jsx";
+
 const calcMedian = (arr) => {
   if (!arr.length) return 0;
   const sorted = arr.slice().sort((a, b) => a - b);
@@ -18,6 +18,38 @@ const calcMedian = (arr) => {
     return (sorted[mid - 1] + sorted[mid]) / 2;
   }
   return sorted[mid];
+};
+
+// Custom tick renderer for axis
+const ExtremeLabelTick = ({
+  x,
+  y,
+  payload,
+  ticks,
+  extremeLeftLabel,
+  extremeRightLabel,
+}) => {
+  const value = payload.value;
+  const isFirst = value === ticks[0];
+  const isLast = value === ticks[ticks.length - 1];
+  return (
+    <g>
+      <text
+        x={x}
+        y={y + 18}
+        textAnchor="middle"
+        fill="#1e293b"
+        fontWeight={700}
+        fontSize={16}
+      >
+        {isFirst && extremeLeftLabel
+          ? extremeLeftLabel
+          : isLast && extremeRightLabel
+          ? extremeRightLabel
+          : value}
+      </text>
+    </g>
+  );
 };
 
 export const Histogram = ({
@@ -75,7 +107,7 @@ export const Histogram = ({
             dataKey="name"
             type="number"
             ticks={uniqueTicks}
-            domain={["auto", "auto"]}
+            domain={[minTick, maxTick]}
             interval={0}
             allowDuplicatedCategory={false}
             tick={(props) =>

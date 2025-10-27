@@ -7,8 +7,16 @@ import { BarGraph } from "../components/BarGraph";
 import { StackedGraph } from "../components/StackedGraph";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { MultiSelectCountryFilter } from "../components/MultiSelectCountryFilter";
+import { MultiSelect } from "../components/MultiSelect";
 import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
+
+const filterConfig = [
+  { key: "q106", label: "Country" },
+  { key: "years_gov", label: "Years in Government" },
+  // You can add more here: { key: "sector", label: "Sector" }
+];
+
 export const HomePage = () => {
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +60,37 @@ export const HomePage = () => {
     }
   }, [user]);
 
+  // One state: selections for all filters
+  const [filterSelections, setFilterSelections] = useState(
+    filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
+  );
+
+  // Helper: get the intersection of all filter selections
+  const applyAllFilters = (data, selections) =>
+    data.filter((row) =>
+      filterConfig.every(
+        ({ key }) =>
+          !selections[key].length || selections[key].includes(row[key])
+      )
+    );
+  // For counts in each filter, exclude that filter from selection (so you see what is possible with the other filters applied)
+  const getFilteredForFilter = (data, selections, excludeKey) =>
+    data.filter((row) =>
+      filterConfig.every(
+        ({ key }) =>
+          key === excludeKey ||
+          !selections[key].length ||
+          selections[key].includes(row[key])
+      )
+    );
+  // When any filter changes, update setFilteredSurveyData (and UI)
+  const handleMultiFilterChange = (filterKey, newSelection) => {
+    setFilterSelections((prev) => {
+      const updated = { ...prev, [filterKey]: newSelection };
+      setFilteredSurveyData(applyAllFilters(surveys, updated));
+      return updated;
+    });
+  };
   // Handle filter changes
   const handleFilterChange = (filteredOriginalRows, selected) => {
     setFilteredSurveyData(filteredOriginalRows);
@@ -81,13 +120,24 @@ export const HomePage = () => {
             id="filter-heading"
             className="text-2xl font-semibold text-gray-900 mb-6"
           >
-            Filter by Country
+            Filter
           </h2>
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <MultiSelectCountryFilter
-              apiData={surveys}
-              onFilterChange={handleFilterChange}
-            />
+          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-col md:flex-row gap-4">
+            {filterConfig.map(({ key, label }) => (
+              <MultiSelect
+                key={key}
+                apiData={surveys}
+                filteredDataForCounts={getFilteredForFilter(
+                  surveys,
+                  filterSelections,
+                  key
+                )}
+                selectedValues={filterSelections[key]}
+                onChange={(vals) => handleMultiFilterChange(key, vals)}
+                filterKey={key}
+                filterName={label}
+              />
+            ))}
           </div>
         </section>
 
