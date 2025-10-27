@@ -41,11 +41,14 @@ export const HomePage = () => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
       try {
-        const res = await axios.get("http://localhost:3000/api/surveys", {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        });
+        const res = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/surveys`,
+          {
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+            },
+          }
+        );
         const data = res.data;
         setSurveys(data.surveys);
         setFilteredSurveyData(data.surveys);

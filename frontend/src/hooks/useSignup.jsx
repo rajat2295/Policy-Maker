@@ -12,7 +12,9 @@ export const useSignup = () => {
     if (decoded.email_verified) {
       const email = decoded.email;
       const response = await fetch(
-        "http://localhost:3000/api/user/google-signup",
+        `${
+          import.meta.env.VITE_REACT_APP_BACKEND_BASEURL
+        }/api/user/google-signup`,
         {
           method: "POST",
           headers: {
@@ -41,13 +43,16 @@ export const useSignup = () => {
   const signup = async (email, password, refId) => {
     setIsLoading(true);
     setError(null);
-    const response = await fetch("http://localhost:3000/api/user/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password, refId }),
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/user/signup`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, refId }),
+      }
+    );
     const json = await response.json();
     if (response.ok) {
       // save the user to local storage

@@ -13,7 +13,9 @@ export const useLogin = () => {
     if (decoded.email_verified) {
       const email = decoded.email;
       const response = await fetch(
-        "http://localhost:3000/api/user/verifyEmail",
+        `${
+          import.meta.env.VITE_REACT_APP_BACKEND_BASEURL
+        }/api/user/verifyEmail`,
         {
           method: "POST",
           headers: {
@@ -41,13 +43,16 @@ export const useLogin = () => {
   const login = async (email, password) => {
     setIsLoading(true);
     setError(null);
-    const response = await fetch("http://localhost:3000/api/user/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/user/login`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
     const json = await response.json();
     if (response.ok) {
       // save the user to local storage
