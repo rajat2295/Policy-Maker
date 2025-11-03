@@ -125,7 +125,7 @@ export const BarGraph = ({
                 tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="percentage" fill="#184e77" />
+              <Bar dataKey="percentage" fill="#184e77" radius={[0, 6, 6, 0]} />
               {showReferenceLine && (
                 <ReferenceLine
                   y={median}

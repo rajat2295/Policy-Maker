@@ -9,28 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-
-const reasonMap = {
-  engagement: {
-    reason_why_not_read_1: "Can't access journal articles",
-    reason_why_not_read_2: "Don't know where to find",
-    reason_why_not_read_3: "Too technical",
-    reason_why_not_read_4: "Not relevant",
-    reason_why_not_read_5: "Not timely enough",
-    reason_why_not_read_6: "Don't trust research",
-    reason_why_not_read_7: "No time",
-  },
-  communication: {
-    comm_approach_1: "5-6 page summary",
-    comm_approach_2: "1-2 page written summary",
-    comm_approach_3: "1-2 page visual summary",
-    comm_approach_4: "Slide deck",
-    comm_approach_5: "2-sentence summary",
-    comm_approach_6: "2-sentence policy recommendation",
-    comm_approach_7: "Academic journal article",
-  },
-};
-
+import { reasonMap } from "../helpers/constants";
 export const StackedGraph = ({ data, graphType = "engagement" }) => {
   const [filteredData, setFilteredData] = React.useState([]);
   const reasons = Object.keys(reasonMap[graphType]);
@@ -38,38 +17,69 @@ export const StackedGraph = ({ data, graphType = "engagement" }) => {
   useEffect(() => {
     const temp = [];
     let frequency = {};
+    let usefulFrequency = {};
     reasons.forEach((reason) => {
-      frequency[reason] = { 1: 0, 2: 0, 3: 0 };
+      frequency[reason] = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      usefulFrequency[reason] = {
+        "Somewhat useful": 0,
+        "Very useful": 0,
+        "Not very useful": 0,
+        "Not useful at all": 0,
+      };
     });
 
-    data.forEach((survey) => {
-      reasons.forEach((reason) => {
-        if (!isNaN(survey[reason])) {
-          frequency[reason][survey[reason]] =
-            (frequency[reason][survey[reason]] || 0) + 1;
-        }
+    if (graphType === "usefulEcon") {
+      data.forEach((survey) => {
+        reasons.forEach((reason) => {
+          if (survey[reason]) {
+            usefulFrequency[reason][survey[reason]] =
+              (usefulFrequency[reason][survey[reason]] || 0) + 1;
+          }
+        });
       });
-    });
 
-    Object.keys(reasonMap[graphType]).forEach((reason) => {
-      temp.push({
-        name: reasonMap[graphType][reason],
-        "1st": frequency[reason][1],
-        "2nd": frequency[reason][2],
-        "3rd": frequency[reason][3],
-        sum: frequency[reason][1] + frequency[reason][2] + frequency[reason][3],
+      reasons.forEach((policy) => {
+        temp.push({
+          name: reasonMap[graphType][policy],
+          "Somewhat useful": usefulFrequency[policy]["Somewhat useful"],
+          "Very useful": usefulFrequency[policy]["Very useful"],
+          "Not very useful": usefulFrequency[policy]["Not very useful"],
+          "Not useful at all": usefulFrequency[policy]["Not useful at all"],
+        });
       });
-    });
-
+    } else {
+      data.forEach((survey) => {
+        reasons.forEach((reason) => {
+          if (!isNaN(survey[reason])) {
+            frequency[reason][survey[reason]] =
+              (frequency[reason][survey[reason]] || 0) + 1;
+          }
+        });
+      });
+      Object.keys(reasonMap[graphType]).forEach((reason) => {
+        temp.push({
+          name: reasonMap[graphType][reason],
+          "1st": frequency[reason][1],
+          "2nd": frequency[reason][2],
+          "3rd": frequency[reason][3],
+          sum:
+            frequency[reason][1] + frequency[reason][2] + frequency[reason][3],
+        });
+      });
+    }
+    console.log("Temp data before sort:", temp);
     // Sort by the sum of 1st, 2nd, and 3rd (ascending)
     temp.sort((a, b) => b.sum - a.sum);
 
     // Remove sum before setting state if you don't want it in the data for the chart
     setFilteredData(temp.map(({ sum, ...rest }) => rest));
   }, [data, graphType]);
+  console.log("Filtered Data for StackedGraph:", filteredData);
   return (
-    <ResponsiveContainer width="93%">
+    <ResponsiveContainer width="100%" height={300}>
       <BarChart
+        height={"100%"}
+        width={"100%"}
         layout="vertical"
         data={filteredData}
         margin={{
@@ -96,9 +106,31 @@ export const StackedGraph = ({ data, graphType = "engagement" }) => {
           }}
         />
         <Legend />
-        <Bar dataKey="1st" stackId="a" fill="#184e77" />
-        <Bar dataKey="2nd" stackId="a" fill="#168aad" />
-        <Bar dataKey="3rd" stackId="a" fill="#76c893 " radius={[0, 6, 6, 0]} />
+        {graphType === "usefulEcon" ? (
+          <>
+            <Bar dataKey="Not useful at all" stackId="a" fill="#34a0a4" />
+            <Bar dataKey="Not very useful" stackId="a" fill="#76c893" />
+
+            <Bar dataKey="Somewhat useful" stackId="a" fill="#184e77" />
+            <Bar
+              dataKey="Very useful"
+              stackId="a"
+              fill="#168aad"
+              radius={[0, 6, 6, 0]}
+            />
+          </>
+        ) : (
+          <>
+            <Bar dataKey="1st" stackId="a" fill="#184e77" />
+            <Bar dataKey="2nd" stackId="a" fill="#168aad" />
+            <Bar
+              dataKey="3rd"
+              stackId="a"
+              fill="#76c893 "
+              radius={[0, 6, 6, 0]}
+            />
+          </>
+        )}
       </BarChart>
     </ResponsiveContainer>
   );

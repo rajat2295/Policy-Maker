@@ -4,13 +4,12 @@ import axios from "axios";
 import { GridItem } from "../components/GridItem";
 import { AreaChart } from "../components/AreaChart";
 import { BarGraph } from "../components/BarGraph";
-import { StackedGraph } from "../components/StackedGraph";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { MultiSelectCountryFilter } from "../components/MultiSelectCountryFilter";
 import { MultiSelect } from "../components/MultiSelect";
 import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
-
+import { StackedGraph } from "../components/StackedGraph";
 const filterConfig = [
   { key: "q106", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
@@ -391,6 +390,18 @@ As a potential consumer of academic economic research, would you prefer that eco
                           column="meta_novel_ideas_1"
                           extremeLeftLabel="Meta-analyses/reviews"
                           extremeRightLabel="Novel ideas"
+                        />
+                      </GridItem>
+
+                      <GridItem
+                        size="large"
+                        title="Reasons for not reading academic research"
+                        caption="Please rank, in order from most to least important, the reasons why you don’t read more academic economics research.
+Please click on each topic and move it to the preferred position in the ranking."
+                      >
+                        <StackedGraph
+                          data={filteredSurveyData}
+                          graphType="usefulEcon"
                         />
                       </GridItem>
                       {/* <GridItem title="Policymaker ratings of how valuable different conceptual categories of research are">
