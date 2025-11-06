@@ -3,9 +3,7 @@ import React from "react";
 export const GridItem = ({ title, size = "small", caption = "", children }) => {
   return (
     <section
-      className={`flex flex-col p-6 border border-gray-200 rounded-xl shadow-sm bg-white h-[${
-        size === "small" ? "50vh" : "70vh"
-      }] focus-within:ring-2 focus-within:ring-blue-600 transition-shadow`}
+      className={`flex flex-col p-6 border border-gray-200 rounded-xl shadow-sm bg-white h-[100%] focus-within:ring-2 focus-within:ring-blue-600 transition-shadow`}
       aria-label={title}
       tabIndex={0}
     >

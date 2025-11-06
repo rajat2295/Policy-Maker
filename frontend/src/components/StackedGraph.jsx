@@ -10,7 +10,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { reasonMap } from "../helpers/constants";
-export const StackedGraph = ({ data, graphType = "engagement" }) => {
+export const StackedGraph = ({
+  data,
+  graphType = "engagement",
+  size = "normal",
+}) => {
   const [filteredData, setFilteredData] = React.useState([]);
   const reasons = Object.keys(reasonMap[graphType]);
 
@@ -75,10 +79,11 @@ export const StackedGraph = ({ data, graphType = "engagement" }) => {
     setFilteredData(temp.map(({ sum, ...rest }) => rest));
   }, [data, graphType]);
   console.log("Filtered Data for StackedGraph:", filteredData);
+  const graphHeight = size === "normal" ? 600 : 800;
   return (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={graphHeight}>
       <BarChart
-        height={"100%"}
+        height={graphHeight}
         width={"100%"}
         layout="vertical"
         data={filteredData}

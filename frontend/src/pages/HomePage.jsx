@@ -10,6 +10,7 @@ import { MultiSelect } from "../components/MultiSelect";
 import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
 import { StackedGraph } from "../components/StackedGraph";
+import { BubbleGraph } from "../components/BubbleGraph";
 const filterConfig = [
   { key: "q106", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
@@ -394,15 +395,23 @@ As a potential consumer of academic economic research, would you prefer that eco
                       </GridItem>
 
                       <GridItem
-                        size="large"
+                        size="xl"
                         title="Reasons for not reading academic research"
                         caption="Please rank, in order from most to least important, the reasons why you don’t read more academic economics research.
 Please click on each topic and move it to the preferred position in the ranking."
                       >
                         <StackedGraph
+                          size="large"
                           data={filteredSurveyData}
                           graphType="usefulEcon"
                         />
+                      </GridItem>
+                      <GridItem
+                        size="xl"
+                        title="Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences (i.e. how much more often they’d engage)"
+                        caption=""
+                      >
+                        <BubbleGraph data={filteredSurveyData} />
                       </GridItem>
                       {/* <GridItem title="Policymaker ratings of how valuable different conceptual categories of research are">
                         <Histogram
