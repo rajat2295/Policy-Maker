@@ -1,4 +1,4 @@
-import React, { use } from "react";
+import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { GridItem } from "../components/GridItem";
@@ -11,6 +11,129 @@ import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
 import { StackedGraph } from "../components/StackedGraph";
 import { BubbleGraph } from "../components/BubbleGraph";
+
+// Define the structure of all charts, including their titles and which tab they belong to
+// This array will be used for both rendering the default view AND for searching
+const ALL_GRAPHS = [
+  // Tab 0: Evidence that policymakers engage with research
+  {
+    tab: 0,
+    title: "How often policy makers learn about academic economic research",
+    component: (data) => <BarGraph data={data} column="how_often_learn" />,
+    caption:
+      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
+  },
+  {
+    tab: 0,
+    title: "How often policymakers use academic economic research",
+    component: (data) => <BarGraph data={data} column="how_often_use" />,
+    caption:
+      "How often would you say you use a piece of academic economic research as part of your policy work?",
+  },
+  {
+    tab: 0,
+    title: "How often policymakers can engage open-mindedly",
+    component: (data) => <BarGraph data={data} column="foregone_conclusion" />,
+    caption:
+      "Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?",
+  },
+  {
+    tab: 0,
+    title: "Reasons for not reading academic research",
+    size: "large",
+    component: (data) => <StackedGraph data={data} graphType="engagement" />,
+    caption:
+      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
+  },
+
+  // Tab 1: How to communicate research to policymakers
+  {
+    tab: 1,
+    title: "How effective different communication methods are",
+    size: "large",
+    component: (data) => <StackedGraph data={data} graphType="communication" />,
+    caption:
+      "Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:",
+  },
+  {
+    tab: 1,
+    title: "Policymakers preferences for academic economists to reach out",
+    component: (data) => <BarGraph data={data} column="reach_out" />,
+    caption:
+      "Hypothetically, would you like it if academic economists in relevant fields reached out to you more often to share their research? Please note: your answer will not affect the volume or frequency of emails you get from us or anyone else. We will not share identifiable individual answers with anyone.",
+  },
+
+  // Tab 2: The type of research policymakers want
+  {
+    tab: 2,
+    title:
+      "Policymaker preferences for research on new/proposed versus existing policies",
+    component: (data) => (
+      <Histogram
+        data={data}
+        column="new_existing_1"
+        orientation="vertical"
+        showReferenceLine
+        extremeLeftLabel="Existing policies"
+        extremeRightLabel="New policies"
+      />
+    ),
+    caption:
+      "Existing or new policies: As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?",
+  },
+  {
+    tab: 2,
+    title: "Policymaker preferences for interdisciplinary research",
+    component: (data) => (
+      <Histogram
+        data={data}
+        orientation="vertical"
+        showReferenceLine
+        column="less_more_multidisci_6"
+        extremeLeftLabel="Multidisciplinary"
+        extremeRightLabel="Economics only"
+      />
+    ),
+    caption:
+      "Less vs more multidisciplinary: Would you be more likely to use this research if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
+  },
+  {
+    tab: 2,
+    title: "Policymaker preferences for meta-analyses versus original work",
+    component: (data) => (
+      <Histogram
+        data={data}
+        orientation="vertical"
+        showReferenceLine
+        column="meta_novel_ideas_1"
+        extremeLeftLabel="Meta-analyses/reviews"
+        extremeRightLabel="Novel ideas"
+      />
+    ),
+    caption:
+      "Review papers vs novel ideas: As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?",
+  },
+  {
+    tab: 2,
+    title: "What makes academic economics research useful to policymakers",
+    size: "xl",
+    component: (data) => (
+      <StackedGraph size="large" data={data} graphType="usefulEcon" />
+    ),
+    caption:
+      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
+  },
+  {
+    tab: 2,
+    title:
+      "Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences",
+    size: "xl",
+    component: (data) => <BubbleGraph data={data} />,
+    caption:
+      "Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences (i.e. how much more often they’d engage)",
+  },
+];
+
 const filterConfig = [
   { key: "q106", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
@@ -23,6 +146,9 @@ export const HomePage = () => {
   const [filteredSurveyData, setFilteredSurveyData] = useState([]);
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredGraphTitles, setFilteredGraphTitles] = useState([]);
+
   const { user } = useAuthContext();
   const valuable_catagories = {
     category_valuable_9: "Predictive modelling",
@@ -37,6 +163,25 @@ export const HomePage = () => {
   // Minimum survey count for displaying graphs
   const MIN_SURVEY_COUNT = 5;
 
+  // --- Search Logic ---
+  useEffect(() => {
+    if (searchTerm) {
+      const lowerCaseSearch = searchTerm.toLowerCase();
+      const results = ALL_GRAPHS.filter((graph) =>
+        graph.title.toLowerCase().includes(lowerCaseSearch)
+      );
+      setFilteredGraphTitles(results);
+    } else {
+      // If search term is empty, clear the filtered results
+      setFilteredGraphTitles([]);
+    }
+  }, [searchTerm]);
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+  };
+
+  // --- Existing Logic (Unchanged) ---
   useEffect(() => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
@@ -54,7 +199,6 @@ export const HomePage = () => {
         setFilteredSurveyData(data.surveys);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching surveys:", error);
         setLoading(false);
       }
     };
@@ -99,9 +243,28 @@ export const HomePage = () => {
     setFilteredSurveyData(filteredOriginalRows);
     setSelectedCountries(selected);
   };
-  // console.log("Filtered Survey Data:", filteredSurveyData);
   // Check if we have enough data to show graphs
   const hasEnoughData = filteredSurveyData.length >= MIN_SURVEY_COUNT;
+
+  // --- Helper to get graphs for the current tab ---
+  const getGraphsForCurrentTab = () => {
+    // If search is active, use the filtered results
+    if (searchTerm && filteredGraphTitles.length > 0) {
+      return filteredGraphTitles;
+    }
+    // If search is empty, revert to default tab logic
+    else if (!searchTerm) {
+      return ALL_GRAPHS.filter((graph) => graph.tab === activeTab);
+    }
+    // If search is active but returned no results
+    else {
+      return [];
+    }
+  };
+
+  const currentGraphs = getGraphsForCurrentTab();
+
+  // --- Rendering Logic (Updated Sections) ---
 
   return (
     <div className="min-h-screen bg-white">
@@ -144,10 +307,11 @@ export const HomePage = () => {
           </div>
         </section>
 
-        {/* Results Summary */}
+        {/* Results Summary and Search Bar Container */}
         <section className="mb-8" aria-labelledby="results-heading">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            {/* Left side: Summary */}
+            <div className="flex-grow">
               <h2
                 id="results-heading"
                 className="text-2xl font-semibold text-gray-900 mb-2"
@@ -175,7 +339,43 @@ export const HomePage = () => {
               </p>
             </div>
 
-            {/* Data sufficiency indicator with proper ARIA */}
+            {/* Right side: Search Component (Small and Aligned Right) */}
+            <div className="w-full md:w-96 flex justify-end">
+              <div className="relative w-full">
+                <label htmlFor="graph-search" className="sr-only">
+                  Search Graphs
+                </label>
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <input
+                  id="graph-search"
+                  name="graph-search"
+                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                  placeholder="Search graphs by title..."
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {/* Clear Button (Visible only when searchTerm is present) */}
+              </div>
+            </div>
+          </div>
+
+          {/* Data sufficiency indicator (moved down for spacing) */}
+          <div className="flex justify-start mt-4">
             <div className="flex-shrink-0">
               {hasEnoughData ? (
                 <div
@@ -237,200 +437,66 @@ export const HomePage = () => {
           </div>
         ) : (
           <>
-            <DashboardTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            {/* Render tabs ONLY if the search term is empty */}
+            {!searchTerm && (
+              <DashboardTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+              />
+            )}
+
             {/* Charts Section */}
             {hasEnoughData ? (
               <section className="mb-12" aria-labelledby="charts-heading">
-                {activeTab === 0 ? (
-                  <>
-                    <h2
-                      id="charts-heading"
-                      className="text-2xl font-semibold text-gray-900 mb-6"
-                    >
-                      Evidence that policymakers engage with research
-                    </h2>
-                    <div className="space-y-8">
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem
-                          title="How often policy makers learn about academic economic research"
-                          caption="How often would you say you learn about a piece of academic economic research?
-For example, you hear about some research an economics professor did on a podcast."
-                        >
-                          <BarGraph
-                            data={filteredSurveyData}
-                            column="how_often_learn"
-                          />
-                        </GridItem>
-                      </div>
+                <h2
+                  id="charts-heading"
+                  className="text-2xl font-semibold text-gray-900 mb-6"
+                >
+                  {searchTerm
+                    ? `Search Results for "${searchTerm}"`
+                    : ALL_GRAPHS.find((g) => g.tab === activeTab)
+                    ? activeTab === 0
+                      ? "Evidence that policymakers engage with research"
+                      : activeTab === 1
+                      ? "How to communicate research to policymakers"
+                      : "The type of research policymakers want"
+                    : "Charts"}
+                </h2>
 
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                {/* Conditional rendering based on search results */}
+                {currentGraphs.length > 0 ? (
+                  <div className="space-y-8">
+                    {currentGraphs.map((graph, index) => (
+                      <div
+                        key={`${graph.tab}-${graph.title.replace(
+                          /\s/g,
+                          "-"
+                        )}-${index}`}
+                        className="bg-white border border-gray-200 rounded-lg shadow-sm"
+                      >
                         <GridItem
-                          title="How often policymakers use academic economic research"
-                          caption="How often would you say you use a piece of academic economic research as part of your policy work?"
+                          title={graph.title}
+                          caption={graph.caption}
+                          size={graph.size}
                         >
-                          <BarGraph
-                            data={filteredSurveyData}
-                            column="how_often_use"
-                          />
+                          {/* Execute the component function with the data */}
+                          {graph.component(filteredSurveyData)}
                         </GridItem>
                       </div>
-
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem
-                          title="How often policymakers can engage open-mindedly"
-                          caption="Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?"
-                        >
-                          <BarGraph
-                            data={filteredSurveyData}
-                            column="foregone_conclusion"
-                          />
-                        </GridItem>
-                      </div>
-
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem
-                          size="large"
-                          title="Reasons for not reading academic research"
-                          caption="Please rank, in order from most to least important, the reasons why you don’t read more academic economics research.
-Please click on each topic and move it to the preferred position in the ranking."
-                        >
-                          <StackedGraph
-                            data={filteredSurveyData}
-                            graphType="engagement"
-                          />
-                        </GridItem>
-                      </div>
+                    ))}
+                  </div>
+                ) : searchTerm ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500">
+                      No graphs found matching **"{searchTerm}"**.
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  ""
-                )}
-                {activeTab === 1 ? (
-                  <>
-                    <h2
-                      id="charts-heading"
-                      className="text-2xl font-semibold text-gray-900 mb-6"
-                    >
-                      How to communicate research to policymakers
-                    </h2>
-                    <div className="space-y-8">
-                      <GridItem
-                        size="large"
-                        title="Reasons for not reading academic research"
-                        caption="Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:"
-                      >
-                        <StackedGraph
-                          data={filteredSurveyData}
-                          graphType="communication"
-                        />
-                      </GridItem>
-                      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <GridItem
-                          title="Policymakers preferences for academic economists to reach out"
-                          caption="Hypothetically, would you like it if academic economists in relevant fields reached out to you more often to share their research?
-
-Please note: your answer will not affect the volume or frequency of emails you get from us or anyone else. We will not share identifiable individual answers with anyone."
-                        >
-                          <BarGraph
-                            data={filteredSurveyData}
-                            column="reach_out"
-                          />
-                        </GridItem>
-                      </div>
+                  <div className="text-center py-12">
+                    <div className="text-gray-500">
+                      No charts defined for this tab.
                     </div>
-                  </>
-                ) : (
-                  ""
-                )}
-                {activeTab === 2 ? (
-                  <>
-                    <h2
-                      id="charts-heading"
-                      className="text-2xl font-semibold text-gray-900 mb-6"
-                    >
-                      The type of research policymakers want
-                    </h2>
-                    <div className="space-y-8">
-                      <GridItem
-                        caption="Existing or new policies:
-As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?"
-                        title="Policymaker preferences for research on new/proposed versus existing policies"
-                      >
-                        <Histogram
-                          data={filteredSurveyData}
-                          column="new_existing_1"
-                          orientation="vertical"
-                          showReferenceLine
-                          extremeLeftLabel="Existing policies"
-                          extremeRightLabel="New policies"
-                        />
-                      </GridItem>
-                      <GridItem
-                        title="Policymaker preferences for interdisciplinary research"
-                        caption="Less vs more multidisciplinary:
-Would you be more likely to use this research if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?"
-                      >
-                        <Histogram
-                          data={filteredSurveyData}
-                          orientation="vertical"
-                          showReferenceLine
-                          column="less_more_multidisci_6"
-                          extremeLeftLabel="Multidisciplinary"
-                          extremeRightLabel="Economics only"
-                        />
-                      </GridItem>
-                      <GridItem
-                        title="Policymaker preferences for meta-analyses versus original work"
-                        caption="Review papers vs novel ideas:
-As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?"
-                      >
-                        <Histogram
-                          data={filteredSurveyData}
-                          orientation="vertical"
-                          showReferenceLine
-                          column="meta_novel_ideas_1"
-                          extremeLeftLabel="Meta-analyses/reviews"
-                          extremeRightLabel="Novel ideas"
-                        />
-                      </GridItem>
-
-                      <GridItem
-                        size="xl"
-                        title="Reasons for not reading academic research"
-                        caption="Please rank, in order from most to least important, the reasons why you don’t read more academic economics research.
-Please click on each topic and move it to the preferred position in the ranking."
-                      >
-                        <StackedGraph
-                          size="large"
-                          data={filteredSurveyData}
-                          graphType="usefulEcon"
-                        />
-                      </GridItem>
-                      <GridItem
-                        size="xl"
-                        title="Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences (i.e. how much more often they’d engage)"
-                        caption=""
-                      >
-                        <BubbleGraph data={filteredSurveyData} />
-                      </GridItem>
-                      {/* <GridItem title="Policymaker ratings of how valuable different conceptual categories of research are">
-                        <Histogram
-                          data={filteredSurveyData}
-                          orientation="vertical"
-                          showReferenceLine
-                          column="new_existing_1"
-                        />
-                      </GridItem>
-                      <GridItem title="Policymaker preferences for research on new/proposed versus existing policies">
-                        <BarGraph
-                          data={filteredSurveyData}
-                          column="new_existing_1"
-                        />
-                      </GridItem> */}
-                    </div>
-                  </>
-                ) : (
-                  ""
+                  </div>
                 )}
               </section>
             ) : (
