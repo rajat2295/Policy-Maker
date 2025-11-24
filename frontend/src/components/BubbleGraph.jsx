@@ -7,12 +7,10 @@ import {
   YAxis,
   Scatter,
   Tooltip,
-  Legend,
   ZAxis,
   ReferenceLine,
 } from "recharts";
 
-// Define label/order explicitly for clarity and axis control
 const LABELS = [
   "Never",
   "Less than once a month",
@@ -24,13 +22,12 @@ const LABELS = [
 
 const labelToIndex = (label) => LABELS.indexOf(label);
 
-// Main component
 export const BubbleGraph = ({
   data,
   xKey = "how_often_learn",
   yKey = "if_changes_how_often",
 }) => {
-  // Aggregate counts for every possible (x, y) pair
+  // 1. Map string data to numeric indices (0 to 5)
   const chartData = useMemo(() => {
     const counts = {};
     data.forEach((row) => {
@@ -41,36 +38,38 @@ export const BubbleGraph = ({
         counts[key] = (counts[key] || 0) + 1;
       }
     });
-    console.log("BubbleGraph counts:", counts);
-    // Fill out all grid cells, 0 if not present
+
     return LABELS.flatMap((yLabel) =>
       LABELS.map((xLabel) => {
         const key = `${xLabel}||${yLabel}`;
         return {
           xLabel,
           yLabel,
-          xIndex: labelToIndex(xLabel),
-          yIndex: labelToIndex(yLabel),
+          xIndex: labelToIndex(xLabel), // We will plot these numbers
+          yIndex: labelToIndex(yLabel), // We will plot these numbers
           count: counts[key] || 0,
         };
       })
     );
   }, [data, xKey, yKey]);
 
-  // Get largest count for bubble scaling
-  const maxCount = Math.max(...chartData.map((d) => d.count), 1);
+  // Create array of indices [0, 1, 2, 3, 4, 5] for ticks
+  const ticks = LABELS.map((_, i) => i);
 
   return (
     <div style={{ width: "100%", height: 600 }}>
       <ResponsiveContainer>
         <ScatterChart margin={{ top: 40, right: 20, bottom: 30, left: 50 }}>
           <CartesianGrid />
+
+          {/* 2. Use type="number" and format the ticks back to strings */}
           <XAxis
-            type="category"
-            dataKey="xLabel"
+            type="number"
+            dataKey="xIndex"
             name="Current Frequency"
+            ticks={ticks}
+            tickFormatter={(index) => LABELS[index]}
             tick={{ fontWeight: 600 }}
-            allowDuplicatedCategory={false}
             interval={0}
             label={{
               value: "Learning about research",
@@ -78,43 +77,53 @@ export const BubbleGraph = ({
               offset: 17,
             }}
           />
+
           <YAxis
-            type="category"
-            dataKey="yLabel"
+            type="number"
+            dataKey="yIndex"
             name="If Matched Preferences"
+            ticks={ticks}
+            tickFormatter={(index) => LABELS[index]}
             tick={{ fontWeight: 600 }}
-            allowDuplicatedCategory={false}
             interval={0}
             label={{
               value: "Research matched preferences",
               angle: -90,
-              position: "insideLeft", // Could also use "left" for outside
-              offset: -18, // or try 8, 10, etc.
+              position: "insideLeft",
+              offset: -18,
             }}
           />
+
           <ZAxis
             type="number"
             dataKey="count"
-            range={[60, 400]} // min/max bubble size
+            range={[60, 400]}
             name="People"
           />
+
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
-            formatter={(value, name) => [
-              `${value}`,
-              name === "count" ? "Responses" : name,
-            ]}
+            formatter={(value, name, props) => {
+              if (name === "count") return [`${value}`, "Responses"];
+              // For X and Y tooltip values, convert index back to label
+              if (name === "Current Frequency") return LABELS[value];
+              if (name === "If Matched Preferences") return LABELS[value];
+              return value;
+            }}
             contentStyle={{ fontWeight: 600 }}
           />
-          {/* Diagonal reference line for context */}
+
+          {/* 3. Reference line now uses simple coordinates from 0,0 to 5,5 */}
           <ReferenceLine
             segment={[
-              { x: LABELS[0], y: LABELS[0] },
-              { x: LABELS[LABELS.length - 1], y: LABELS[LABELS.length - 1] },
+              { x: 0, y: 0 },
+              { x: 5, y: 5 },
             ]}
-            stroke="#666"
-            strokeDasharray="3 3"
+            stroke="black"
+            strokeWidth={1} // Made it slightly thicker
+            ifOverflow="extendDomain"
           />
+
           <Scatter
             data={chartData.filter((d) => d.count > 0)}
             shape="circle"

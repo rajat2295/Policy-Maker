@@ -13,7 +13,6 @@ import { StackedGraph } from "../components/StackedGraph";
 import { BubbleGraph } from "../components/BubbleGraph";
 
 // Define the structure of all charts, including their titles and which tab they belong to
-// This array will be used for both rendering the default view AND for searching
 const ALL_GRAPHS = [
   // Tab 0: Evidence that policymakers engage with research
   {
@@ -137,7 +136,6 @@ const ALL_GRAPHS = [
 const filterConfig = [
   { key: "q106", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
-  // You can add more here: { key: "sector", label: "Sector" }
 ];
 
 export const HomePage = () => {
@@ -150,17 +148,6 @@ export const HomePage = () => {
   const [filteredGraphTitles, setFilteredGraphTitles] = useState([]);
 
   const { user } = useAuthContext();
-  const valuable_catagories = {
-    category_valuable_9: "Predictive modelling",
-    category_valuable_10: "Novel policy ideas",
-    category_valuable_11: "Descriptive work",
-    category_valuable_12: "Cost-benefit/Welfare analysis",
-    category_valuable_13: "Impact on diff. groups",
-    category_valuable_14: "Casual effects",
-    category_valuable_15: "Unintended consequences",
-    category_valuable_16: "Identifying mechanisms",
-  };
-  // Minimum survey count for displaying graphs
   const MIN_SURVEY_COUNT = 5;
 
   // --- Search Logic ---
@@ -172,7 +159,6 @@ export const HomePage = () => {
       );
       setFilteredGraphTitles(results);
     } else {
-      // If search term is empty, clear the filtered results
       setFilteredGraphTitles([]);
     }
   }, [searchTerm]);
@@ -181,7 +167,7 @@ export const HomePage = () => {
     setSearchTerm("");
   };
 
-  // --- Existing Logic (Unchanged) ---
+  // --- Existing Logic ---
   useEffect(() => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
@@ -199,6 +185,7 @@ export const HomePage = () => {
         setFilteredSurveyData(data.surveys);
         setLoading(false);
       } catch (error) {
+        console.error("Error fetching surveys:", error);
         setLoading(false);
       }
     };
@@ -207,12 +194,10 @@ export const HomePage = () => {
     }
   }, [user]);
 
-  // One state: selections for all filters
   const [filterSelections, setFilterSelections] = useState(
     filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
   );
 
-  // Helper: get the intersection of all filter selections
   const applyAllFilters = (data, selections) =>
     data.filter((row) =>
       filterConfig.every(
@@ -220,7 +205,7 @@ export const HomePage = () => {
           !selections[key].length || selections[key].includes(row[key])
       )
     );
-  // For counts in each filter, exclude that filter from selection (so you see what is possible with the other filters applied)
+
   const getFilteredForFilter = (data, selections, excludeKey) =>
     data.filter((row) =>
       filterConfig.every(
@@ -230,7 +215,7 @@ export const HomePage = () => {
           selections[key].includes(row[key])
       )
     );
-  // When any filter changes, update setFilteredSurveyData (and UI)
+
   const handleMultiFilterChange = (filterKey, newSelection) => {
     setFilterSelections((prev) => {
       const updated = { ...prev, [filterKey]: newSelection };
@@ -238,33 +223,25 @@ export const HomePage = () => {
       return updated;
     });
   };
-  // Handle filter changes
+
   const handleFilterChange = (filteredOriginalRows, selected) => {
     setFilteredSurveyData(filteredOriginalRows);
     setSelectedCountries(selected);
   };
-  // Check if we have enough data to show graphs
+
   const hasEnoughData = filteredSurveyData.length >= MIN_SURVEY_COUNT;
 
-  // --- Helper to get graphs for the current tab ---
   const getGraphsForCurrentTab = () => {
-    // If search is active, use the filtered results
     if (searchTerm && filteredGraphTitles.length > 0) {
       return filteredGraphTitles;
-    }
-    // If search is empty, revert to default tab logic
-    else if (!searchTerm) {
+    } else if (!searchTerm) {
       return ALL_GRAPHS.filter((graph) => graph.tab === activeTab);
-    }
-    // If search is active but returned no results
-    else {
+    } else {
       return [];
     }
   };
 
   const currentGraphs = getGraphsForCurrentTab();
-
-  // --- Rendering Logic (Updated Sections) ---
 
   return (
     <div className="min-h-screen bg-white">
@@ -280,148 +257,151 @@ export const HomePage = () => {
           </p>
         </header>
 
-        {/* Filter Section */}
-        <section className="mb-12" aria-labelledby="filter-heading">
-          <h2
-            id="filter-heading"
-            className="text-2xl font-semibold text-gray-900 mb-6"
-          >
-            Filter
-          </h2>
-          <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-col md:flex-row gap-4">
-            {filterConfig.map(({ key, label }) => (
-              <MultiSelect
-                key={key}
-                apiData={surveys}
-                filteredDataForCounts={getFilteredForFilter(
-                  surveys,
-                  filterSelections,
-                  key
-                )}
-                selectedValues={filterSelections[key]}
-                onChange={(vals) => handleMultiFilterChange(key, vals)}
-                filterKey={key}
-                filterName={label}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Results Summary and Search Bar Container */}
-        <section className="mb-8" aria-labelledby="results-heading">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            {/* Left side: Summary */}
-            <div className="flex-grow">
-              <h2
-                id="results-heading"
-                className="text-2xl font-semibold text-gray-900 mb-2"
-              >
-                Results Summary
-              </h2>
-              <p className="text-gray-600">
-                Showing{" "}
-                <span className="font-medium text-gray-900">
-                  {filteredSurveyData.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium text-gray-900">
-                  {surveys.length}
-                </span>{" "}
-                survey responses
-                {selectedCountries.length > 0 && (
-                  <span className="block sm:inline sm:ml-2 text-sm">
-                    Filtered by:{" "}
-                    <span className="font-medium">
-                      {selectedCountries.join(", ")}
-                    </span>
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {/* Right side: Search Component (Small and Aligned Right) */}
-            <div className="w-full md:w-96 flex justify-end">
-              <div className="relative w-full">
-                <label htmlFor="graph-search" className="sr-only">
-                  Search Graphs
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <input
-                  id="graph-search"
-                  name="graph-search"
-                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
-                  placeholder="Search graphs by title..."
-                  type="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+        {/* STICKY WRAPPER */}
+        {/* top-0: Sticks to top
+            z-30: Ensures it stays above graphs
+            bg-white: Prevents content from showing through
+            pb-4: Adds padding at the bottom of the sticky area
+        */}
+        <div className="sticky top-0 z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
+          {/* Filter Section */}
+          <section className="mb-6" aria-labelledby="filter-heading">
+            <h2
+              id="filter-heading"
+              className="text-2xl font-semibold text-gray-900 mb-4"
+            >
+              Filter
+            </h2>
+            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-col md:flex-row gap-4">
+              {filterConfig.map(({ key, label }) => (
+                <MultiSelect
+                  key={key}
+                  apiData={surveys}
+                  filteredDataForCounts={getFilteredForFilter(
+                    surveys,
+                    filterSelections,
+                    key
+                  )}
+                  selectedValues={filterSelections[key]}
+                  onChange={(vals) => handleMultiFilterChange(key, vals)}
+                  filterKey={key}
+                  filterName={label}
                 />
-                {/* Clear Button (Visible only when searchTerm is present) */}
+              ))}
+            </div>
+          </section>
+
+          {/* Results Summary and Search Bar Container */}
+          <section className="mb-4" aria-labelledby="results-heading">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              {/* Left side: Summary */}
+              <div className="flex-grow">
+                <h2
+                  id="results-heading"
+                  className="text-xl font-semibold text-gray-900 mb-1"
+                >
+                  Results Summary
+                </h2>
+                <p className="text-gray-600 text-sm">
+                  Showing{" "}
+                  <span className="font-medium text-gray-900">
+                    {filteredSurveyData.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-gray-900">
+                    {surveys.length}
+                  </span>{" "}
+                  survey responses
+                  {selectedCountries.length > 0 && (
+                    <span className="block sm:inline sm:ml-2">
+                      Filtered by:{" "}
+                      <span className="font-medium">
+                        {selectedCountries.join(", ")}
+                      </span>
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              {/* Right side: Search Component */}
+              <div className="w-full md:w-96 flex justify-end">
+                <div className="relative w-full">
+                  <label htmlFor="graph-search" className="sr-only">
+                    Search Graphs
+                  </label>
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    id="graph-search"
+                    name="graph-search"
+                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                    placeholder="Search graphs by title..."
+                    type="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Data sufficiency indicator (moved down for spacing) */}
-          <div className="flex justify-start mt-4">
-            <div className="flex-shrink-0">
-              {hasEnoughData ? (
-                <div
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg"
-                  role="status"
-                  aria-label="Data status: sufficient for analysis"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
+            {/* Data sufficiency indicator */}
+            <div className="flex justify-start mt-2">
+              <div className="flex-shrink-0">
+                {hasEnoughData ? (
+                  <div
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg"
+                    role="status"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Sufficient data ({filteredSurveyData.length} responses)
-                </div>
-              ) : (
-                <div
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg"
-                  role="alert"
-                  aria-label="Data status: insufficient for reliable analysis"
-                >
-                  <svg
-                    className="w-4 h-4 mr-2"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
+                    <svg
+                      className="w-3 h-3 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Sufficient data
+                  </div>
+                ) : (
+                  <div
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg"
+                    role="alert"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Need {MIN_SURVEY_COUNT}+ responses (
-                  {filteredSurveyData.length} current)
-                </div>
-              )}
+                    <svg
+                      className="w-3 h-3 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Need {MIN_SURVEY_COUNT}+ responses
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
+        {/* END STICKY WRAPPER */}
 
         {loading ? (
           <div
@@ -439,15 +419,17 @@ export const HomePage = () => {
           <>
             {/* Render tabs ONLY if the search term is empty */}
             {!searchTerm && (
-              <DashboardTabs
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-              />
+              <div className="mt-8">
+                <DashboardTabs
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                />
+              </div>
             )}
 
             {/* Charts Section */}
             {hasEnoughData ? (
-              <section className="mb-12" aria-labelledby="charts-heading">
+              <section className="mb-12 mt-6" aria-labelledby="charts-heading">
                 <h2
                   id="charts-heading"
                   className="text-2xl font-semibold text-gray-900 mb-6"
@@ -500,9 +482,9 @@ export const HomePage = () => {
                 )}
               </section>
             ) : (
-              /* Insufficient data message with proper ARIA */
+              /* Insufficient data message */
               <section
-                className="mb-12"
+                className="mb-12 mt-8"
                 aria-labelledby="insufficient-data-heading"
               >
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
