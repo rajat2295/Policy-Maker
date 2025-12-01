@@ -11,6 +11,11 @@ import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
 import { StackedGraph } from "../components/StackedGraph";
 import { BubbleGraph } from "../components/BubbleGraph";
+import {
+  FREQUENCY_ORDER,
+  OCCASION_FREQUENCY,
+  USEFULNESS_FREQUENCY_ORDER,
+} from "../helpers/constants";
 
 // Define the structure of all charts, including their titles and which tab they belong to
 const ALL_GRAPHS = [
@@ -18,53 +23,39 @@ const ALL_GRAPHS = [
   {
     tab: 0,
     title: "How often policy makers learn about academic economic research",
-    component: (data) => <BarGraph data={data} column="how_often_learn" />,
+    component: (data) => (
+      <BarGraph
+        customOrder={[FREQUENCY_ORDER]}
+        data={data}
+        column="how_often_learn"
+      />
+    ),
     caption:
       "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
   },
   {
     tab: 0,
-    title: "How often policymakers use academic economic research",
-    component: (data) => <BarGraph data={data} column="how_often_use" />,
-    caption:
-      "How often would you say you use a piece of academic economic research as part of your policy work?",
-  },
-  {
-    tab: 0,
-    title: "How often policymakers can engage open-mindedly",
-    component: (data) => <BarGraph data={data} column="foregone_conclusion" />,
-    caption:
-      "Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?",
-  },
-  {
-    tab: 0,
-    title: "Reasons for not reading academic research",
-    size: "large",
-    component: (data) => <StackedGraph data={data} graphType="engagement" />,
-    caption:
-      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
-  },
-
-  // Tab 1: How to communicate research to policymakers
-  {
-    tab: 1,
-    title: "How effective different communication methods are",
+    title: "Preferred communication methods for research",
     size: "large",
     component: (data) => <StackedGraph data={data} graphType="communication" />,
     caption:
       "Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:",
   },
   {
-    tab: 1,
-    title: "Policymakers preferences for academic economists to reach out",
-    component: (data) => <BarGraph data={data} column="reach_out" />,
+    tab: 0,
+    title: "Usefulness of research on different topics",
+    component: (data) => (
+      <BarGraph
+        data={data}
+        column="reach_out"
+        customOrder={USEFULNESS_FREQUENCY_ORDER}
+      />
+    ),
     caption:
-      "Hypothetically, would you like it if academic economists in relevant fields reached out to you more often to share their research? Please note: your answer will not affect the volume or frequency of emails you get from us or anyone else. We will not share identifiable individual answers with anyone.",
+      "Do you think it would be useful if there was more research on [topic] produced by academic economists? Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question",
   },
-
-  // Tab 2: The type of research policymakers want
   {
-    tab: 2,
+    tab: 0,
     title:
       "Policymaker preferences for research on new/proposed versus existing policies",
     component: (data) => (
@@ -81,7 +72,7 @@ const ALL_GRAPHS = [
       "Existing or new policies: As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?",
   },
   {
-    tab: 2,
+    tab: 0,
     title: "Policymaker preferences for interdisciplinary research",
     component: (data) => (
       <Histogram
@@ -94,10 +85,115 @@ const ALL_GRAPHS = [
       />
     ),
     caption:
-      "Less vs more multidisciplinary: Would you be more likely to use this research if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
+      "Less vs more multidisciplinary: Would you be more likely to use [a piece of research] if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
+  },
+  {
+    tab: 1,
+    title: "How often policy makers learn about academic economic research",
+    component: (data) => (
+      <BarGraph
+        customOrder={[FREQUENCY_ORDER]}
+        data={data}
+        column="how_often_learn"
+      />
+    ),
+    caption:
+      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
+  },
+  {
+    tab: 1,
+    title: "How often policymakers use academic economic research",
+    component: (data) => (
+      <BarGraph
+        customOrder={FREQUENCY_ORDER}
+        data={data}
+        column="how_often_use"
+      />
+    ),
+    caption:
+      "How often would you say you use a piece of academic economic research as part of your policy work?",
+  },
+  {
+    tab: 1,
+    title: "How often policymakers can engage open-mindedly",
+    component: (data) => (
+      <BarGraph
+        customOrder={[OCCASION_FREQUENCY]}
+        data={data}
+        column="foregone_conclusion"
+      />
+    ),
+    caption:
+      "Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?",
+  },
+  {
+    tab: 1,
+    title: "Most Important reasons for not reading academic research",
+    size: "large",
+    component: (data) => <StackedGraph data={data} graphType="engagement" />,
+    caption:
+      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
+  },
+
+  // Tab 1: How to communicate research to policymakers
+  {
+    tab: 2,
+    title: "Preferred communication methods for research",
+    size: "large",
+    component: (data) => <StackedGraph data={data} graphType="communication" />,
+    caption:
+      "Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:",
   },
   {
     tab: 2,
+    title: "Usefulness of research on different topics",
+    component: (data) => (
+      <BarGraph
+        data={data}
+        column="reach_out"
+        customOrder={USEFULNESS_FREQUENCY_ORDER}
+      />
+    ),
+    caption:
+      "Do you think it would be useful if there was more research on [topic] produced by academic economists? Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question",
+  },
+
+  // Tab 2: The type of research policymakers want
+  {
+    tab: 3,
+    title:
+      "Policymaker preferences for research on new/proposed versus existing policies",
+    component: (data) => (
+      <Histogram
+        data={data}
+        column="new_existing_1"
+        orientation="vertical"
+        showReferenceLine
+        extremeLeftLabel="Existing policies"
+        extremeRightLabel="New policies"
+      />
+    ),
+    caption:
+      "Existing or new policies: As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?",
+  },
+  {
+    tab: 3,
+    title: "Policymaker preferences for interdisciplinary research",
+    component: (data) => (
+      <Histogram
+        data={data}
+        orientation="vertical"
+        showReferenceLine
+        column="less_more_multidisci_6"
+        extremeLeftLabel="Multidisciplinary"
+        extremeRightLabel="Economics only"
+      />
+    ),
+    caption:
+      "Less vs more multidisciplinary: Would you be more likely to use [a piece of research] if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
+  },
+  {
+    tab: 3,
     title: "Policymaker preferences for meta-analyses versus original work",
     component: (data) => (
       <Histogram
@@ -113,7 +209,7 @@ const ALL_GRAPHS = [
       "Review papers vs novel ideas: As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?",
   },
   {
-    tab: 2,
+    tab: 3,
     title: "What makes academic economics research useful to policymakers",
     size: "xl",
     component: (data) => (
@@ -123,13 +219,13 @@ const ALL_GRAPHS = [
       "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
   },
   {
-    tab: 2,
+    tab: 3,
     title:
       "Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences",
     size: "xl",
     component: (data) => <BubbleGraph data={data} />,
     caption:
-      "Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences (i.e. how much more often they’d engage)",
+      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
   },
 ];
 
@@ -438,9 +534,11 @@ export const HomePage = () => {
                     ? `Search Results for "${searchTerm}"`
                     : ALL_GRAPHS.find((g) => g.tab === activeTab)
                     ? activeTab === 0
-                      ? "Evidence that policymakers engage with research"
+                      ? "Highlights"
                       : activeTab === 1
-                      ? "How to communicate research to policymakers"
+                      ? "Evidence that policymakers engage with research"
+                      : activeTab === 2
+                      ? "How to communicate research to policymaker's"
                       : "The type of research policymakers want"
                     : "Charts"}
                 </h2>

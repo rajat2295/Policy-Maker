@@ -10,6 +10,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { CustomTooltip } from "./CustomTooltip";
+
 // Helper to compute median
 const calcMedian = (arr) => {
   if (!arr.length) return 0;
@@ -23,10 +24,10 @@ const calcMedian = (arr) => {
 export const BarGraph = ({
   data,
   column = "how_often_use",
-  orientation = "horizontal", // "horizontal" or "vertical"
+  orientation = "horizontal",
   showReferenceLine = false,
+  customOrder = [], // New prop to receive your static list
 }) => {
-  // Prepare chart data and compute median
   const { chartData, median, maxValue } = useMemo(() => {
     let frequency = {};
     let numericValues = [];
@@ -52,19 +53,35 @@ export const BarGraph = ({
       };
     });
 
-    // Find median and max
-    chartArray.sort((a, b) => a.percentage - b.percentage);
+    // --- ORDERING LOGIC ---
+    if (customOrder && customOrder.length > 0) {
+      // If a custom list is provided, force chartArray to match that order
+      chartArray.sort((a, b) => {
+        const indexA = customOrder.indexOf(a.name);
+        const indexB = customOrder.indexOf(b.name);
+
+        // If an item isn't in your list, push it to the end (9999)
+        const rankA = indexA === -1 ? 9999 : indexA;
+        const rankB = indexB === -1 ? 9999 : indexB;
+
+        return rankA - rankB;
+      });
+    } else {
+      // Default: Sort by percentage if no custom order is given
+      chartArray.sort((a, b) => a.percentage - b.percentage);
+    }
+    // ----------------------
+
+    // Median and Max calculations (unaffected by sorting)
     const medianValue = calcMedian(chartArray.map((e) => e.percentage));
     const maxValue = Math.max(...chartArray.map((e) => e.percentage));
 
     return { chartData: chartArray, median: medianValue, maxValue };
-  }, [data, column]);
+  }, [data, column, customOrder]);
 
   if (!chartData.length) return <p>No data available</p>;
 
   const isHorizontal = orientation === "horizontal";
-
-  // Dynamic domain logic
   const domainMax = maxValue < 45 ? 45 : Math.ceil(maxValue / 10) * 10;
 
   return (

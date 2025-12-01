@@ -59,3 +59,23 @@ export const reasonMap = {
     useful_econ_fiscal: "Fiscal and Tax Policy",
   },
 };
+export const FREQUENCY_ORDER = [
+  "At least a few times a week",
+  "Once a week",
+  "2-3 times a month",
+  "Once a month",
+  "Less often than once a month",
+  "Never",
+];
+export const OCCASION_FREQUENCY = [
+  "Always or almost always",
+  "Most of the time",
+  "About half the time",
+  "Less than half the time",
+  "Rarely or never",
+];
+export const USEFULNESS_FREQUENCY_ORDER = [
+  "Very useful",
+  "Somewhat useful",
+  "Not at all useful",
+];

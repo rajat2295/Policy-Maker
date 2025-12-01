@@ -11,7 +11,7 @@ export const GridItem = ({ title, size = "small", caption = "", children }) => {
         {title}
       </h2>
       {caption && (
-        <figcaption className="mt-1 mb-5 text-xs text-gray-500 font-medium italic">
+        <figcaption className="mt-1 mb-5 text-s text-gray-500 font-medium italic">
           {caption}
         </figcaption>
       )}

@@ -8,9 +8,10 @@ export const DashboardTabs = ({ activeTab, setActiveTab }) => (
     style={{ borderBottom: "2px solid #e5e7eb" }}
   >
     {[
-      { label: "Evidence", id: 0 },
-      { label: "Communication", id: 1 },
-      { label: "Type", id: 2 },
+      { label: "Highlights", id: 0 },
+      { label: "Evidence", id: 1 },
+      { label: "Communication", id: 2 },
+      { label: "Type", id: 3 },
     ].map((tab) => (
       <button
         type="button"

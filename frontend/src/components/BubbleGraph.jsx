@@ -72,7 +72,7 @@ export const BubbleGraph = ({
             tick={{ fontWeight: 600 }}
             interval={0}
             label={{
-              value: "Learning about research",
+              value: "Current frequency of learning about research",
               position: "bottom",
               offset: 17,
             }}
@@ -87,7 +87,7 @@ export const BubbleGraph = ({
             tick={{ fontWeight: 600 }}
             interval={0}
             label={{
-              value: "Research matched preferences",
+              value: "Frequency if research matched preferences",
               angle: -90,
               position: "insideLeft",
               offset: -18,
