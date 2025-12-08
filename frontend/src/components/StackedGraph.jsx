@@ -40,7 +40,14 @@ const renderOrderedLegend = (order) => (props) => {
   );
 
   return (
-    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: 20,
+        flexWrap: "wrap",
+        justifyContent: "center",
+      }}
+    >
       {sorted.map((entry, index) => (
         <span
           key={index}
@@ -54,7 +61,7 @@ const renderOrderedLegend = (order) => (props) => {
               display: "inline-block",
             }}
           />
-          {entry.value}
+          <p style={{ color: entry.color, fontWeight: 500 }}>{entry.value}</p>
         </span>
       ))}
     </div>
