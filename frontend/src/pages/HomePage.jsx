@@ -16,6 +16,7 @@ import {
   OCCASION_FREQUENCY,
   USEFULNESS_FREQUENCY_ORDER,
 } from "../helpers/constants";
+import { AverageRankBarGraph } from "../components/AverageRankBarGraph";
 
 // Define the structure of all charts, including their titles and which tab they belong to
 const ALL_GRAPHS = [
@@ -208,6 +209,17 @@ const ALL_GRAPHS = [
     caption:
       "Review papers vs novel ideas: As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?",
   },
+  {
+    tab: 3,
+    size: "xl",
+    title: "Reasons to not read more academic economics research",
+    component: (data) => (
+      <AverageRankBarGraph data={data} keyPrefix="rank_nowork_" />
+    ),
+    caption:
+      "The fraction of policymakers not working in a policy area who rank that policy area as top-5 most valuable for research.",
+  },
+
   {
     tab: 3,
     title: "What makes academic economics research useful to policymakers",
