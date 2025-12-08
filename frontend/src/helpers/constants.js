@@ -64,7 +64,7 @@ export const FREQUENCY_ORDER = [
   "Once a week",
   "2-3 times a month",
   "Once a month",
-  "Less often than once a month",
+  "Less than once a month",
   "Never",
 ];
 export const OCCASION_FREQUENCY = [

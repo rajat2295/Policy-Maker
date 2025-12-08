@@ -22,10 +22,10 @@ const ALL_GRAPHS = [
   // Tab 0: Evidence that policymakers engage with research
   {
     tab: 0,
-    title: "How often policy makers learn about academic economic research",
+    title: "How often policymakers learn about academic economic research",
     component: (data) => (
       <BarGraph
-        customOrder={[FREQUENCY_ORDER]}
+        customOrder={FREQUENCY_ORDER}
         data={data}
         column="how_often_learn"
       />
@@ -89,10 +89,10 @@ const ALL_GRAPHS = [
   },
   {
     tab: 1,
-    title: "How often policy makers learn about academic economic research",
+    title: "How often policymakers learn about academic economic research",
     component: (data) => (
       <BarGraph
-        customOrder={[FREQUENCY_ORDER]}
+        customOrder={FREQUENCY_ORDER}
         data={data}
         column="how_often_learn"
       />
@@ -118,7 +118,7 @@ const ALL_GRAPHS = [
     title: "How often policymakers can engage open-mindedly",
     component: (data) => (
       <BarGraph
-        customOrder={[OCCASION_FREQUENCY]}
+        customOrder={OCCASION_FREQUENCY}
         data={data}
         column="foregone_conclusion"
       />
@@ -128,11 +128,11 @@ const ALL_GRAPHS = [
   },
   {
     tab: 1,
-    title: "Most Important reasons for not reading academic research",
+    title: "Most Important reasons for not reading academic research.",
     size: "large",
     component: (data) => <StackedGraph data={data} graphType="engagement" />,
-    caption:
-      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
+    caption: `Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.
+      Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question`,
   },
 
   // Tab 1: How to communicate research to policymakers
@@ -213,7 +213,17 @@ const ALL_GRAPHS = [
     title: "What makes academic economics research useful to policymakers",
     size: "xl",
     component: (data) => (
-      <StackedGraph size="large" data={data} graphType="usefulEcon" />
+      <StackedGraph
+        size="large"
+        data={data}
+        graphType="usefulEcon"
+        seriesOrder={[
+          "Very useful",
+          "Somewhat useful",
+          "Not very useful",
+          "Not useful at all",
+        ]}
+      />
     ),
     caption:
       "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
@@ -230,8 +240,9 @@ const ALL_GRAPHS = [
 ];
 
 const filterConfig = [
-  { key: "q106", label: "Country" },
+  { key: "country_final", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
+  { key: "elected", label: "Elected status" },
 ];
 
 export const HomePage = () => {

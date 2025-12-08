@@ -21,12 +21,36 @@ const calcMedian = (arr) => {
     : sorted[mid];
 };
 
+// Optional helper: sort tooltip payload by the same order as x-axis labels
+const sortTooltipPayload = (payload, customOrder) => {
+  if (!Array.isArray(payload) || !customOrder || !customOrder.length) {
+    return payload;
+  }
+
+  const orderMap = customOrder.reduce((acc, label, index) => {
+    acc[label] = index;
+    return acc;
+  }, {});
+
+  return [...payload].sort((a, b) => {
+    const nameA = a.payload?.name ?? a.name;
+    const nameB = b.payload?.name ?? b.name;
+
+    const rankA =
+      orderMap[nameA] !== undefined ? orderMap[nameA] : Number.MAX_SAFE_INTEGER;
+    const rankB =
+      orderMap[nameB] !== undefined ? orderMap[nameB] : Number.MAX_SAFE_INTEGER;
+
+    return rankA - rankB;
+  });
+};
+
 export const BarGraph = ({
   data,
   column = "how_often_use",
   orientation = "horizontal",
   showReferenceLine = false,
-  customOrder = [], // New prop to receive your static list
+  customOrder = [], // static list defining visual + tooltip order
 }) => {
   const { chartData, median, maxValue } = useMemo(() => {
     let frequency = {};
@@ -55,12 +79,10 @@ export const BarGraph = ({
 
     // --- ORDERING LOGIC ---
     if (customOrder && customOrder.length > 0) {
-      // If a custom list is provided, force chartArray to match that order
       chartArray.sort((a, b) => {
         const indexA = customOrder.indexOf(a.name);
         const indexB = customOrder.indexOf(b.name);
 
-        // If an item isn't in your list, push it to the end (9999)
         const rankA = indexA === -1 ? 9999 : indexA;
         const rankB = indexB === -1 ? 9999 : indexB;
 
@@ -83,6 +105,12 @@ export const BarGraph = ({
 
   const isHorizontal = orientation === "horizontal";
   const domainMax = maxValue < 45 ? 45 : Math.ceil(maxValue / 10) * 10;
+
+  // Wrap CustomTooltip so payload is sorted consistently
+  const tooltipContent = (tooltipProps) => {
+    const sortedPayload = sortTooltipPayload(tooltipProps.payload, customOrder);
+    return <CustomTooltip {...tooltipProps} payload={sortedPayload} />;
+  };
 
   return (
     <div
@@ -111,7 +139,7 @@ export const BarGraph = ({
                 tick={{ fontWeight: 500, fill: "#1e293b" }}
                 width={140}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={tooltipContent} />
               <Bar dataKey="percentage" fill="#184e77" />
               {showReferenceLine && (
                 <ReferenceLine
@@ -141,7 +169,7 @@ export const BarGraph = ({
                 tickFormatter={(tick) => `${tick}%`}
                 tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={tooltipContent} />
               <Bar dataKey="percentage" fill="#184e77" radius={[0, 6, 6, 0]} />
               {showReferenceLine && (
                 <ReferenceLine

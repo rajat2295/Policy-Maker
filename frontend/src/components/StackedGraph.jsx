@@ -10,13 +10,73 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { reasonMap } from "../helpers/constants";
+
+const DEFAULT_USEFUL_ORDER = [
+  "Not useful at all",
+  "Not very useful",
+  "Somewhat useful",
+  "Very useful",
+];
+
+const colorMapUseful = {
+  "Not useful at all": "#34a0a4",
+  "Not very useful": "#76c893",
+  "Somewhat useful": "#184e77",
+  "Very useful": "#168aad",
+};
+
+const makeItemSorter = (order) => (item) => {
+  if (!order) return 0;
+  const idx = order.indexOf(item.name);
+  return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+};
+
+const renderOrderedLegend = (order) => (props) => {
+  const { payload } = props;
+  if (!payload || !order) return null;
+
+  const sorted = [...payload].sort(
+    (a, b) => order.indexOf(a.value) - order.indexOf(b.value)
+  );
+
+  return (
+    <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      {sorted.map((entry, index) => (
+        <span
+          key={index}
+          style={{ display: "flex", alignItems: "center", gap: 4 }}
+        >
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              backgroundColor: entry.color,
+              display: "inline-block",
+            }}
+          />
+          {entry.value}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 export const StackedGraph = ({
   data,
   graphType = "engagement",
   size = "normal",
+  // optional: controls stack order + legend order + tooltip order
+  seriesOrder,
 }) => {
   const [filteredData, setFilteredData] = React.useState([]);
   const reasons = Object.keys(reasonMap[graphType]);
+
+  const usefulStackOrder =
+    graphType === "usefulEcon"
+      ? seriesOrder && seriesOrder.length
+        ? seriesOrder
+        : DEFAULT_USEFUL_ORDER
+      : null;
 
   useEffect(() => {
     const temp = [];
@@ -71,15 +131,16 @@ export const StackedGraph = ({
         });
       });
     }
-    console.log("Temp data before sort:", temp);
-    // Sort by the sum of 1st, 2nd, and 3rd (ascending)
-    temp.sort((a, b) => b.sum - a.sum);
+
+    // Sort by the sum of 1st, 2nd, and 3rd (descending)
+    temp.sort((a, b) => (b.sum || 0) - (a.sum || 0));
 
     // Remove sum before setting state if you don't want it in the data for the chart
     setFilteredData(temp.map(({ sum, ...rest }) => rest));
   }, [data, graphType]);
-  console.log("Filtered Data for StackedGraph:", filteredData);
+
   const graphHeight = size === "normal" ? 600 : 800;
+
   return (
     <ResponsiveContainer width="100%" height={graphHeight}>
       <BarChart
@@ -109,21 +170,32 @@ export const StackedGraph = ({
             borderRadius: 8,
             border: "none",
           }}
+          itemSorter={
+            graphType === "usefulEcon" && usefulStackOrder
+              ? makeItemSorter(usefulStackOrder)
+              : undefined
+          }
         />
-        <Legend />
+        <Legend
+          content={
+            graphType === "usefulEcon" && usefulStackOrder
+              ? renderOrderedLegend(usefulStackOrder)
+              : undefined
+          }
+        />
         {graphType === "usefulEcon" ? (
-          <>
-            <Bar dataKey="Not useful at all" stackId="a" fill="#34a0a4" />
-            <Bar dataKey="Not very useful" stackId="a" fill="#76c893" />
-
-            <Bar dataKey="Somewhat useful" stackId="a" fill="#184e77" />
-            <Bar
-              dataKey="Very useful"
-              stackId="a"
-              fill="#168aad"
-              radius={[0, 6, 6, 0]}
-            />
-          </>
+          usefulStackOrder.map((label, index) => {
+            const isLast = index === usefulStackOrder.length - 1;
+            return (
+              <Bar
+                key={label}
+                dataKey={label}
+                stackId="a"
+                fill={colorMapUseful[label]}
+                radius={isLast ? [0, 6, 6, 0] : [0, 0, 0, 0]}
+              />
+            );
+          })
         ) : (
           <>
             <Bar dataKey="1st" stackId="a" fill="#184e77" />
