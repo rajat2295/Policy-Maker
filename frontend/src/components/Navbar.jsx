@@ -3,51 +3,140 @@ import { Link } from "react-router";
 import { useLogout } from "../hooks/useLogout";
 import { useAuthContext } from "../hooks/useAuthContext";
 
+const NAV_CATEGORIES = [
+  { label: "Highlights", id: 0 },
+  { label: "Evidence", id: 1 },
+  { label: "Communication", id: 2 },
+  { label: "Type", id: 3 },
+];
+
+const GRAPHS_MAP = {
+  0: [
+    { id: "learn-freq", title: "Learning Frequency" },
+    { id: "comm-methods", title: "Communication Methods" },
+    { id: "topic-usefulness", title: "Topic Usefulness" },
+    { id: "policy-pref", title: "Policy Preferences" },
+  ],
+  1: [
+    { id: "use-freq", title: "Usage Frequency" },
+    { id: "open-mind", title: "Open-mindedness" },
+    { id: "engagement-barriers", title: "Engagement Barriers" },
+  ],
+  2: [
+    { id: "comm-rank-tab2", title: "Effectiveness Ranking" },
+    { id: "reach-out-tab2", title: "Economist Outreach" },
+  ],
+  3: [
+    { id: "interdisciplinary", title: "Interdisciplinary Prefs" },
+    { id: "meta-analysis", title: "Meta-analysis vs Novel" },
+    { id: "useful-factors", title: "Usefulness Factors" },
+    { id: "treatment-effect", title: "Self-Assessed Effect" },
+  ],
+};
+
 export const Navbar = () => {
   const { logout } = useLogout();
   const { user } = useAuthContext();
-  const hanleLogout = () => {
-    logout();
+
+  const handleLogout = () => logout();
+
+  const goToGraph = (tabId, graphId) => {
+    const event = new CustomEvent("jump-to-graph", {
+      detail: { tab: tabId, id: graphId },
+    });
+    window.dispatchEvent(event);
   };
 
   return (
-    <header className="w-full bg-slate-800 text-white shadow-md">
+    <header className="sticky top-0 z-[100] w-full bg-slate-800 text-white shadow-md border-b border-slate-700">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between px-3 py-4 space-y-2 sm:space-y-0">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
           What policymakers value
         </h1>
-        <nav className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 w-full sm:w-auto">
+
+        <nav className="flex flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
+          {user && (
+            <div className="relative group">
+              <button className="px-4 py-1 rounded-full font-medium transition-colors hover:bg-slate-700 flex items-center gap-1 border border-slate-600">
+                Graphs
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              <div className="absolute left-0 mt-0 w-48 bg-white text-slate-800 rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 border border-slate-200">
+                {NAV_CATEGORIES.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="relative group/item px-4 py-2 hover:bg-emerald-50 cursor-default flex justify-between items-center font-medium"
+                  >
+                    <span>{cat.label}</span>
+                    <svg
+                      className="w-3 h-3 text-slate-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+
+                    <div className="absolute left-full top-0 ml-1 w-64 bg-white text-slate-800 rounded-md shadow-2xl opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible py-2 border border-slate-200">
+                      {GRAPHS_MAP[cat.id]?.map((g) => (
+                        <button
+                          key={g.id}
+                          onClick={() => goToGraph(cat.id, g.id)}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-emerald-700 hover:text-white transition-colors"
+                        >
+                          {g.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {user ? (
             <>
-              <span className="text-sm text-slate-200">{`Hello, ${user.email}`}</span>
+              <span className="hidden lg:inline text-sm text-slate-300">
+                {user.email}
+              </span>
               <button
-                onClick={hanleLogout}
-                className="px-4 py-1 bg-white text-slate-800 rounded-full font-semibold transition-colors hover:bg-slate-100 shadow-sm border border-slate-300"
+                onClick={handleLogout}
+                className="px-4 py-1 bg-white text-slate-800 rounded-full font-semibold hover:bg-slate-100 transition-colors"
               >
                 Logout
               </button>
               <Link
                 to="/"
-                className="px-4 py-1 rounded-full font-medium transition-colors hover:bg-slate-100 hover:text-slate-900"
+                className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
               >
                 Surveys
               </Link>
             </>
           ) : (
-            <>
-              <Link
-                to="/login"
-                className="px-4 py-1 rounded-full font-medium transition-colors hover:bg-slate-100 hover:text-slate-900"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="px-4 py-1 rounded-full font-medium transition-colors hover:bg-slate-100 hover:text-slate-900"
-              >
-                Signup
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
+            >
+              Login
+            </Link>
           )}
         </nav>
       </div>

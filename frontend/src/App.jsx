@@ -21,25 +21,27 @@ export const App = () => {
       className="w-full min-h-screen"
       style={{ width: "100vw", height: "100vh" }}
     >
-      <Navbar />
-      {/* <button className="btn" onClick={() => toast.success("Hello!")}></button>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        {/* <button className="btn" onClick={() => toast.success("Hello!")}></button>
       <button className="btn" onClick={() => toast.success("Hello!")}>
         Show Toast
       </button> */}
-      <Routes>
-        <Route
-          path="/"
-          element={user ? <HomePage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/login"
-          element={!user ? <Login /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/signup"
-          element={!user ? <SignUp /> : <Navigate to="/" />}
-        />
-      </Routes>
+        <Routes>
+          <Route
+            path="/"
+            element={user ? <HomePage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/login"
+            element={!user ? <Login /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/signup"
+            element={!user ? <SignUp /> : <Navigate to="/" />}
+          />
+        </Routes>
+      </div>
     </div>
   );
 };

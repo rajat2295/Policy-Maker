@@ -2,10 +2,8 @@ import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { GridItem } from "../components/GridItem";
-import { AreaChart } from "../components/AreaChart";
 import { BarGraph } from "../components/BarGraph";
 import { useAuthContext } from "../hooks/useAuthContext";
-import { MultiSelectCountryFilter } from "../components/MultiSelectCountryFilter";
 import { MultiSelect } from "../components/MultiSelect";
 import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
@@ -18,10 +16,10 @@ import {
 } from "../helpers/constants";
 import { AverageRankBarGraph } from "../components/AverageRankBarGraph";
 
-// Define the structure of all charts, including their titles and which tab they belong to
+// Configuration for all charts with IDs for scrolling
 const ALL_GRAPHS = [
-  // Tab 0: Evidence that policymakers engage with research
   {
+    id: "learn-freq",
     tab: 0,
     title: "How often policymakers learn about academic economic research",
     component: (data) => (
@@ -32,17 +30,19 @@ const ALL_GRAPHS = [
       />
     ),
     caption:
-      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
+      "How often would you say you learn about a piece of academic economic research?",
   },
   {
+    id: "comm-methods",
     tab: 0,
     title: "Preferred communication methods for research",
     size: "large",
     component: (data) => <StackedGraph data={data} graphType="communication" />,
     caption:
-      "Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:",
+      "Rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate results.",
   },
   {
+    id: "topic-usefulness",
     tab: 0,
     title: "Usefulness of research on different topics",
     component: (data) => (
@@ -53,12 +53,12 @@ const ALL_GRAPHS = [
       />
     ),
     caption:
-      "Do you think it would be useful if there was more research on [topic] produced by academic economists? Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question",
+      "Do you think it would be useful if there was more research on [topic] produced by academic economists?",
   },
   {
+    id: "policy-pref",
     tab: 0,
-    title:
-      "Policymaker preferences for research on new/proposed versus existing policies",
+    title: "Policymaker preferences for research on new vs existing policies",
     component: (data) => (
       <Histogram
         data={data}
@@ -69,26 +69,10 @@ const ALL_GRAPHS = [
         extremeRightLabel="New policies"
       />
     ),
-    caption:
-      "Existing or new policies: As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?",
+    caption: "Preferences for research on existing policies vs new policies.",
   },
   {
-    tab: 0,
-    title: "Policymaker preferences for interdisciplinary research",
-    component: (data) => (
-      <Histogram
-        data={data}
-        orientation="vertical"
-        showReferenceLine
-        column="less_more_multidisci_6"
-        extremeLeftLabel="Multidisciplinary"
-        extremeRightLabel="Economics only"
-      />
-    ),
-    caption:
-      "Less vs more multidisciplinary: Would you be more likely to use [a piece of research] if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
-  },
-  {
+    id: "learn-freq-tab1",
     tab: 1,
     title: "How often policymakers learn about academic economic research",
     component: (data) => (
@@ -98,10 +82,10 @@ const ALL_GRAPHS = [
         column="how_often_learn"
       />
     ),
-    caption:
-      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
+    caption: "Frequency of learning about academic research.",
   },
   {
+    id: "use-freq",
     tab: 1,
     title: "How often policymakers use academic economic research",
     component: (data) => (
@@ -111,10 +95,10 @@ const ALL_GRAPHS = [
         column="how_often_use"
       />
     ),
-    caption:
-      "How often would you say you use a piece of academic economic research as part of your policy work?",
+    caption: "Frequency of using academic research in policy work.",
   },
   {
+    id: "open-mind",
     tab: 1,
     title: "How often policymakers can engage open-mindedly",
     component: (data) => (
@@ -125,29 +109,28 @@ const ALL_GRAPHS = [
       />
     ),
     caption:
-      "Think about times when you're tasked with looking up academic economic research as part of your job. How often do you feel you're expected to find research that supports a particular conclusion (e.g. research to back up a policy decision that has already been made)?",
+      "Frequency of being expected to find research supporting a particular conclusion.",
   },
   {
+    id: "engagement-reasons",
     tab: 1,
     title: "Most Important reasons for not reading academic research.",
     size: "large",
     component: (data) => <StackedGraph data={data} graphType="engagement" />,
-    caption: `Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.
-      Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question`,
+    caption: "Ranking reasons for not reading more research.",
   },
-
-  // Tab 1: How to communicate research to policymakers
   {
+    id: "comm-rank-tab2",
     tab: 2,
     title: "Preferred communication methods for research",
     size: "large",
     component: (data) => <StackedGraph data={data} graphType="communication" />,
-    caption:
-      "Imagine you only could only learn about an academic economist's research findings via one of the communication methods below. Please rank the following in terms of the most (1) to least (7) effective approaches economists might use to communicate their results to policymakers:",
+    caption: "Most effective communication methods ranking.",
   },
   {
+    id: "reach-out-tab2",
     tab: 2,
-    title: "Usefulness of research on different topics",
+    title: "Policymakers preferences for academic economists to reach out",
     component: (data) => (
       <BarGraph
         data={data}
@@ -155,15 +138,12 @@ const ALL_GRAPHS = [
         customOrder={USEFULNESS_FREQUENCY_ORDER}
       />
     ),
-    caption:
-      "Do you think it would be useful if there was more research on [topic] produced by academic economists? Bars show, for each topic, the number of policymakers responding Not useful at all / not very useful / somewhat useful / very useful. For each topic, only policymakers who worked in that area were asked the question",
+    caption: "Desire for economists to reach out directly.",
   },
-
-  // Tab 2: The type of research policymakers want
   {
+    id: "new-existing-tab3",
     tab: 3,
-    title:
-      "Policymaker preferences for research on new/proposed versus existing policies",
+    title: "Policymaker preferences for research on new vs existing policies",
     component: (data) => (
       <Histogram
         data={data}
@@ -174,10 +154,10 @@ const ALL_GRAPHS = [
         extremeRightLabel="New policies"
       />
     ),
-    caption:
-      "Existing or new policies: As a potential consumer of academic economic research, would you prefer that economists produced more research on existing policies that are already in place or new policies that could be implemented in the future?",
+    caption: "Preference for research on implementation vs innovation.",
   },
   {
+    id: "interdisciplinary",
     tab: 3,
     title: "Policymaker preferences for interdisciplinary research",
     component: (data) => (
@@ -190,10 +170,10 @@ const ALL_GRAPHS = [
         extremeRightLabel="Economics only"
       />
     ),
-    caption:
-      "Less vs more multidisciplinary: Would you be more likely to use [a piece of research] if it was written in collaboration with researchers from (relevant) fields outside economics, or if it was written entirely by economists?",
+    caption: "Economics-only research vs multidisciplinary collaboration.",
   },
   {
+    id: "meta-analysis",
     tab: 3,
     title: "Policymaker preferences for meta-analyses versus original work",
     component: (data) => (
@@ -206,21 +186,20 @@ const ALL_GRAPHS = [
         extremeRightLabel="Novel ideas"
       />
     ),
-    caption:
-      "Review papers vs novel ideas: As a potential consumer of academic economic research, would you prefer that economists produced more review papers and meta-analyses that summarize existing work or that economists focused more on novel ideas?",
+    caption: "Preference for summarization vs new primary research.",
   },
   {
+    id: "non-work-reasons",
     tab: 3,
     size: "xl",
     title: "Reasons to not read more academic economics research",
     component: (data) => (
       <AverageRankBarGraph data={data} keyPrefix="rank_nowork_" />
     ),
-    caption:
-      "The fraction of policymakers not working in a policy area who rank that policy area as top-5 most valuable for research.",
+    caption: "Valuable research areas for those not currently working in them.",
   },
-
   {
+    id: "useful-factors",
     tab: 3,
     title: "What makes academic economics research useful to policymakers",
     size: "xl",
@@ -237,37 +216,65 @@ const ALL_GRAPHS = [
         ]}
       />
     ),
-    caption:
-      "Please rank, in order from most to least important, the reasons why you don’t read more academic economics research. Please click on each topic and move it to the preferred position in the ranking.",
+    caption: "Factors determining the usefulness of research.",
   },
   {
+    id: "treatment-effect",
     tab: 3,
-    title:
-      "Policymaker self-assessed ‘treatment effect’ on engagement if research matched their type preferences",
+    title: "Policymaker self-assessed ‘treatment effect’ on engagement",
     size: "xl",
     component: (data) => <BubbleGraph data={data} />,
-    caption:
-      "How often would you say you learn about a piece of academic economic research? For example, you hear about some research an economics professor did on a podcast.",
+    caption: "Engagement change if research matched type preferences.",
   },
 ];
 
 const filterConfig = [
   { key: "country_final", label: "Country" },
   { key: "years_gov", label: "Years in Government" },
-  { key: "elected", label: "Elected status" },
+  { key: "elected", label: "Elected?" },
+  { key: "derived_sector", label: "Working In" },
 ];
 
 export const HomePage = () => {
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredSurveyData, setFilteredSurveyData] = useState([]);
-  const [selectedCountries, setSelectedCountries] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredGraphTitles, setFilteredGraphTitles] = useState([]);
 
   const { user } = useAuthContext();
   const MIN_SURVEY_COUNT = 5;
+
+  const [filterSelections, setFilterSelections] = useState(
+    filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
+  );
+
+  // --- LISTENER FOR NAVBAR JUMPS ---
+  useEffect(() => {
+    const handleJump = (e) => {
+      const { tab, id } = e.detail;
+      setActiveTab(tab);
+
+      setTimeout(() => {
+        const element = document.getElementById(id);
+        if (element) {
+          // 'start' ensures the browser respects the scroll-margin-top
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+
+          // Flash effect to show exactly where we landed
+          element.classList.add("ring-4", "ring-emerald-500/20");
+          setTimeout(
+            () => element.classList.remove("ring-4", "ring-emerald-500/20"),
+            2000
+          );
+        }
+      }, 300); // Slight delay to allow the tab content to render first
+    };
+
+    window.addEventListener("jump-to-graph", handleJump);
+    return () => window.removeEventListener("jump-to-graph", handleJump);
+  }, []);
 
   // --- Search Logic ---
   useEffect(() => {
@@ -282,41 +289,56 @@ export const HomePage = () => {
     }
   }, [searchTerm]);
 
-  const handleClearSearch = () => {
-    setSearchTerm("");
-  };
-
-  // --- Existing Logic ---
+  // --- Fetch and Process Data ---
   useEffect(() => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/surveys`,
-          {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${user.token}` } }
         );
-        const data = res.data;
-        setSurveys(data.surveys);
-        setFilteredSurveyData(data.surveys);
+
+        const processed = res.data.surveys.map((survey) => {
+          // 1. Process "Working In" Sector
+          const workKey = Object.keys(survey).find(
+            (key) =>
+              key.startsWith("workin_") &&
+              (Number(survey[key]) === 1 || survey[key] === "1")
+          );
+          let sectorLabel = "Unspecified";
+          if (workKey) {
+            const raw = workKey.replace("workin_", "").replace(/_/g, " ");
+            sectorLabel = raw.charAt(0).toUpperCase() + raw.slice(1);
+          }
+
+          // 2. Robust Elected Status Binary Check
+          const val = survey.elected;
+          const isElected =
+            val === 1 ||
+            val === "1" ||
+            val === true ||
+            (typeof val === "string" && val.toLowerCase().trim() === "yes");
+
+          return {
+            ...survey,
+            derived_sector: sectorLabel,
+            elected: isElected ? "Yes" : "No",
+          };
+        });
+
+        setSurveys(processed);
+        setFilteredSurveyData(processed);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching surveys:", error);
         setLoading(false);
       }
     };
-    if (user) {
-      fetchSurveys();
-    }
+    if (user) fetchSurveys();
   }, [user]);
 
-  const [filterSelections, setFilterSelections] = useState(
-    filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
-  );
-
+  // --- Filter Helpers ---
   const applyAllFilters = (data, selections) =>
     data.filter((row) =>
       filterConfig.every(
@@ -343,55 +365,32 @@ export const HomePage = () => {
     });
   };
 
-  const handleFilterChange = (filteredOriginalRows, selected) => {
-    setFilteredSurveyData(filteredOriginalRows);
-    setSelectedCountries(selected);
-  };
-
   const hasEnoughData = filteredSurveyData.length >= MIN_SURVEY_COUNT;
 
-  const getGraphsForCurrentTab = () => {
-    if (searchTerm && filteredGraphTitles.length > 0) {
-      return filteredGraphTitles;
-    } else if (!searchTerm) {
-      return ALL_GRAPHS.filter((graph) => graph.tab === activeTab);
-    } else {
-      return [];
-    }
-  };
-
-  const currentGraphs = getGraphsForCurrentTab();
+  const currentGraphs = searchTerm
+    ? filteredGraphTitles
+    : ALL_GRAPHS.filter((graph) => graph.tab === activeTab);
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
         <header className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Survey Analysis Dashboard
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl">
             Analyze policymaker research engagement patterns with interactive
-            filters and visualizations.
+            filters.
           </p>
         </header>
 
-        {/* STICKY WRAPPER */}
-        {/* top-0: Sticks to top
-            z-30: Ensures it stays above graphs
-            bg-white: Prevents content from showing through
-            pb-4: Adds padding at the bottom of the sticky area
-        */}
-        <div className="sticky top-0 z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 transition-all">
-          {/* Filter Section */}
-          <section className="mb-6" aria-labelledby="filter-heading">
-            <h2
-              id="filter-heading"
-              className="text-2xl font-semibold text-gray-900 mb-4"
-            >
-              Filter
+        {/* Filters Section (Sticky) */}
+        <div className="sticky top-[64px] z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 transition-all border-b">
+          <section className="mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              Filters
             </h2>
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-col md:flex-row gap-4">
+            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-wrap gap-4">
               {filterConfig.map(({ key, label }) => (
                 <MultiSelect
                   key={key}
@@ -410,15 +409,10 @@ export const HomePage = () => {
             </div>
           </section>
 
-          {/* Results Summary and Search Bar Container */}
-          <section className="mb-4" aria-labelledby="results-heading">
+          <section className="mb-4">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              {/* Left side: Summary */}
               <div className="flex-grow">
-                <h2
-                  id="results-heading"
-                  className="text-xl font-semibold text-gray-900 mb-1"
-                >
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">
                   Results Summary
                 </h2>
                 <p className="text-gray-600 text-sm">
@@ -430,43 +424,14 @@ export const HomePage = () => {
                   <span className="font-medium text-gray-900">
                     {surveys.length}
                   </span>{" "}
-                  survey responses
-                  {selectedCountries.length > 0 && (
-                    <span className="block sm:inline sm:ml-2">
-                      Filtered by:{" "}
-                      <span className="font-medium">
-                        {selectedCountries.join(", ")}
-                      </span>
-                    </span>
-                  )}
+                  responses
                 </p>
               </div>
 
-              {/* Right side: Search Component */}
-              <div className="w-full md:w-96 flex justify-end">
-                <div className="relative w-full">
-                  <label htmlFor="graph-search" className="sr-only">
-                    Search Graphs
-                  </label>
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                      className="h-5 w-5 text-gray-400"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
+              <div className="w-full md:w-96">
+                <div className="relative">
                   <input
-                    id="graph-search"
-                    name="graph-search"
-                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900"
+                    className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
                     placeholder="Search graphs by title..."
                     type="search"
                     value={searchTerm}
@@ -476,67 +441,32 @@ export const HomePage = () => {
               </div>
             </div>
 
-            {/* Data sufficiency indicator */}
-            <div className="flex justify-start mt-2">
-              <div className="flex-shrink-0">
-                {hasEnoughData ? (
-                  <div
-                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg"
-                    role="status"
-                  >
-                    <svg
-                      className="w-3 h-3 mr-2"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Sufficient data
-                  </div>
-                ) : (
-                  <div
-                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-lg"
-                    role="alert"
-                  >
-                    <svg
-                      className="w-3 h-3 mr-2"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Need {MIN_SURVEY_COUNT}+ responses
-                  </div>
-                )}
-              </div>
+            <div className="mt-2">
+              <span
+                className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-lg border ${
+                  hasEnoughData
+                    ? "text-emerald-800 bg-emerald-50 border-emerald-200"
+                    : "text-amber-800 bg-amber-50 border-amber-200"
+                }`}
+              >
+                {hasEnoughData
+                  ? "✓ Sufficient data"
+                  : `⚠ Need ${MIN_SURVEY_COUNT}+ responses`}
+              </span>
             </div>
           </section>
         </div>
-        {/* END STICKY WRAPPER */}
 
         {loading ? (
-          <div
-            className="flex justify-center items-center py-12"
-            role="status"
-            aria-label="Loading surveys"
-          >
-            <div className="text-gray-600">Loading surveys...</div>
+          <div className="flex justify-center py-12 text-gray-600">
+            Loading surveys...
           </div>
         ) : filteredSurveyData.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-gray-500">No surveys available.</div>
+          <div className="text-center py-12 text-gray-500">
+            No data found matching your filters.
           </div>
         ) : (
           <>
-            {/* Render tabs ONLY if the search term is empty */}
             {!searchTerm && (
               <div className="mt-8">
                 <DashboardTabs
@@ -546,101 +476,39 @@ export const HomePage = () => {
               </div>
             )}
 
-            {/* Charts Section */}
             {hasEnoughData ? (
-              <section className="mb-12 mt-6" aria-labelledby="charts-heading">
-                <h2
-                  id="charts-heading"
-                  className="text-2xl font-semibold text-gray-900 mb-6"
-                >
-                  {searchTerm
-                    ? `Search Results for "${searchTerm}"`
-                    : ALL_GRAPHS.find((g) => g.tab === activeTab)
-                    ? activeTab === 0
-                      ? "Highlights"
-                      : activeTab === 1
-                      ? "Evidence that policymakers engage with research"
-                      : activeTab === 2
-                      ? "How to communicate research to policymaker's"
-                      : "The type of research policymakers want"
-                    : "Charts"}
-                </h2>
-
-                {/* Conditional rendering based on search results */}
-                {currentGraphs.length > 0 ? (
-                  <div className="space-y-8">
-                    {currentGraphs.map((graph, index) => (
-                      <div
-                        key={`${graph.tab}-${graph.title.replace(
-                          /\s/g,
-                          "-"
-                        )}-${index}`}
-                        className="bg-white border border-gray-200 rounded-lg shadow-sm"
+              <section className="mb-12 mt-6">
+                <div className="space-y-8">
+                  {currentGraphs.map((graph) => (
+                    <div
+                      key={graph.id}
+                      id={graph.id} // ID for Navbar scrolling
+                      className="bg-white border border-gray-200 rounded-lg shadow-sm scroll-mt-64 transition-all duration-500"
+                    >
+                      <GridItem
+                        title={graph.title}
+                        caption={graph.caption}
+                        size={graph.size}
                       >
-                        <GridItem
-                          title={graph.title}
-                          caption={graph.caption}
-                          size={graph.size}
-                        >
-                          {/* Execute the component function with the data */}
-                          {graph.component(filteredSurveyData)}
-                        </GridItem>
-                      </div>
-                    ))}
-                  </div>
-                ) : searchTerm ? (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">
-                      No graphs found matching **"{searchTerm}"**.
+                        {graph.component(filteredSurveyData)}
+                      </GridItem>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="text-gray-500">
-                      No charts defined for this tab.
+                  ))}
+                  {currentGraphs.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      No graphs found for this search.
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </section>
             ) : (
-              /* Insufficient data message */
-              <section
-                className="mb-12 mt-8"
-                aria-labelledby="insufficient-data-heading"
-              >
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
-                  <div className="max-w-md mx-auto">
-                    <svg
-                      className="mx-auto h-16 w-16 text-gray-400 mb-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <h3
-                      id="insufficient-data-heading"
-                      className="text-xl font-semibold text-gray-900 mb-4"
-                    >
-                      Insufficient Data for Analysis
-                    </h3>
-                    <p className="text-gray-600 mb-6 leading-relaxed">
-                      We need at least {MIN_SURVEY_COUNT} survey responses to
-                      generate reliable charts and insights. Currently showing{" "}
-                      {filteredSurveyData.length} responses.
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Try selecting different countries or clearing the filter
-                      to include more data.
-                    </p>
-                  </div>
-                </div>
+              <section className="mb-12 mt-8 bg-gray-50 border border-gray-200 rounded-lg p-12 text-center">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  Insufficient Data for Analysis
+                </h3>
+                <p className="text-gray-600">
+                  Try adjusting your filters to see more results.
+                </p>
               </section>
             )}
           </>

@@ -20,6 +20,13 @@
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
+/* Create a buffer so sticky headers don't cover the graph title */
+.scroll-section {
+  /* Offset increased to account for:
+     Navbar (~72px) + Filters (~130px) + Results Summary (~60px) + Gap
+  */
+  scroll-margin-top: 300px; 
+}
 
 @keyframes logo-spin {
   from {
