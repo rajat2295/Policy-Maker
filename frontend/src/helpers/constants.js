@@ -79,3 +79,13 @@ export const USEFULNESS_FREQUENCY_ORDER = [
   "Somewhat useful",
   "Not at all useful",
 ];
+export const CUSTOM_SORT_ORDERS = {
+  years_gov: [
+    "0-4 years",
+    "5-8 years",
+    "9-15 years",
+    "16-25 years",
+    "26-35 years",
+  ],
+  // Add others here if needed
+};

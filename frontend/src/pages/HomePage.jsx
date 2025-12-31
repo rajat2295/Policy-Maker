@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { GridItem } from "../components/GridItem";
 import { BarGraph } from "../components/BarGraph";
@@ -9,14 +8,25 @@ import { Histogram } from "../components/Histogram";
 import { DashboardTabs } from "../components/Tabs";
 import { StackedGraph } from "../components/StackedGraph";
 import { BubbleGraph } from "../components/BubbleGraph";
+import { AverageRankBarGraph } from "../components/AverageRankBarGraph";
 import {
   FREQUENCY_ORDER,
   OCCASION_FREQUENCY,
   USEFULNESS_FREQUENCY_ORDER,
 } from "../helpers/constants";
-import { AverageRankBarGraph } from "../components/AverageRankBarGraph";
 
-// Configuration for all charts with IDs for scrolling
+// 1. Define Manual Sort Orders for Filters
+const CUSTOM_SORT_ORDERS = {
+  years_gov: [
+    "0-4 years",
+    "5-8 years",
+    "9-15 years",
+    "16-25 years",
+    "26-35 years",
+  ],
+  // Add others here if needed
+};
+
 const ALL_GRAPHS = [
   {
     id: "learn-freq",
@@ -250,33 +260,26 @@ export const HomePage = () => {
     filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
   );
 
-  // --- LISTENER FOR NAVBAR JUMPS ---
   useEffect(() => {
     const handleJump = (e) => {
       const { tab, id } = e.detail;
       setActiveTab(tab);
-
       setTimeout(() => {
         const element = document.getElementById(id);
         if (element) {
-          // 'start' ensures the browser respects the scroll-margin-top
           element.scrollIntoView({ behavior: "smooth", block: "start" });
-
-          // Flash effect to show exactly where we landed
           element.classList.add("ring-4", "ring-emerald-500/20");
           setTimeout(
             () => element.classList.remove("ring-4", "ring-emerald-500/20"),
             2000
           );
         }
-      }, 300); // Slight delay to allow the tab content to render first
+      }, 300);
     };
-
     window.addEventListener("jump-to-graph", handleJump);
     return () => window.removeEventListener("jump-to-graph", handleJump);
   }, []);
 
-  // --- Search Logic ---
   useEffect(() => {
     if (searchTerm) {
       const lowerCaseSearch = searchTerm.toLowerCase();
@@ -289,42 +292,57 @@ export const HomePage = () => {
     }
   }, [searchTerm]);
 
-  // --- Fetch and Process Data ---
   useEffect(() => {
     const fetchSurveys = async () => {
       if (loading) setLoading(true);
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/surveys`,
-          { headers: { Authorization: `Bearer ${user.token}` } }
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
         );
 
-        const processed = res.data.surveys.map((survey) => {
-          // 1. Process "Working In" Sector
-          const workKey = Object.keys(survey).find(
-            (key) =>
-              key.startsWith("workin_") &&
-              (Number(survey[key]) === 1 || survey[key] === "1")
-          );
-          let sectorLabel = "Unspecified";
-          if (workKey) {
-            const raw = workKey.replace("workin_", "").replace(/_/g, " ");
-            sectorLabel = raw.charAt(0).toUpperCase() + raw.slice(1);
-          }
+        const processed = res.data.surveys.flatMap((survey) => {
+          // 1. Identify all individual "workin_" keys
+          const activeSectors = Object.keys(survey)
+            .filter(
+              (key) =>
+                key.startsWith("workin_") &&
+                (Number(survey[key]) === 1 || survey[key] === "1")
+            )
+            .map((key) => {
+              const raw = key.replace("workin_", "").replace(/_/g, " ");
+              return raw.charAt(0).toUpperCase() + raw.slice(1);
+            });
 
-          // 2. Robust Elected Status Binary Check
+          // 2. Robust Elected Status Check (Ensure this is calculated for EVERYONE)
           const val = survey.elected;
           const isElected =
             val === 1 ||
             val === "1" ||
             val === true ||
-            (typeof val === "string" && val.toLowerCase().trim() === "yes");
+            (typeof val === "string" && val.toLowerCase().trim() === "yes")
+              ? "Yes"
+              : "No";
 
-          return {
-            ...survey,
-            derived_sector: sectorLabel,
-            elected: isElected ? "Yes" : "No",
-          };
+          // 3. If they have sectors, return a row for each sector
+          if (activeSectors.length > 0) {
+            return activeSectors.map((sector) => ({
+              ...survey,
+              derived_sector: sector,
+              elected: isElected, // Explicitly pass the "Yes" or "No" here
+            }));
+          }
+
+          // 4. Fallback: If no sectors, still return the person with their Elected status
+          return [
+            {
+              ...survey,
+              derived_sector: "Unspecified",
+              elected: isElected, // Ensure "Yes" policymakers are not lost here
+            },
+          ];
         });
 
         setSurveys(processed);
@@ -338,7 +356,6 @@ export const HomePage = () => {
     if (user) fetchSurveys();
   }, [user]);
 
-  // --- Filter Helpers ---
   const applyAllFilters = (data, selections) =>
     data.filter((row) =>
       filterConfig.every(
@@ -365,7 +382,13 @@ export const HomePage = () => {
     });
   };
 
-  const hasEnoughData = filteredSurveyData.length >= MIN_SURVEY_COUNT;
+  // --- STATS LOGIC ---
+  // Count unique people (based on survey ID) to show accurate "Showing X of Y"
+  const uniqueFilteredCount = new Set(
+    filteredSurveyData.map((s) => s.id || s._id)
+  ).size;
+  const uniqueTotalCount = new Set(surveys.map((s) => s.id || s._id)).size;
+  const hasEnoughData = uniqueFilteredCount >= MIN_SURVEY_COUNT;
 
   const currentGraphs = searchTerm
     ? filteredGraphTitles
@@ -375,21 +398,62 @@ export const HomePage = () => {
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Survey Analysis Dashboard
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Analyze policymaker research engagement patterns with interactive
-            filters.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Survey Analysis Dashboard
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl">
+                Analyze policymaker research engagement patterns with
+                interactive filters.
+              </p>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Results Summary
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Showing{" "}
+                <span className="font-medium text-gray-900">
+                  {uniqueFilteredCount}
+                </span>{" "}
+                of{" "}
+                <span className="font-medium text-gray-900">
+                  {uniqueTotalCount}
+                </span>{" "}
+                unique responses
+              </p>
+              <div className="mt-2">
+                <span
+                  className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-lg border ${
+                    hasEnoughData
+                      ? "text-emerald-800 bg-emerald-50 border-emerald-200"
+                      : "text-amber-800 bg-amber-50 border-amber-200"
+                  }`}
+                >
+                  {hasEnoughData
+                    ? "✓ Sufficient data"
+                    : `⚠ Need ${MIN_SURVEY_COUNT}+ responses`}
+                </span>
+              </div>
+            </div>
+          </div>
         </header>
 
-        {/* Filters Section (Sticky) */}
-        <div className="sticky top-[64px] z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 transition-all border-b">
+        <div className="sticky top-[64px] z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 border-b">
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              Filters
-            </h2>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+              <h2 className="text-2xl font-semibold text-gray-900">Filters</h2>
+              <div className="w-full md:w-96">
+                <input
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
+                  placeholder="Search graphs by title..."
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-wrap gap-4">
               {filterConfig.map(({ key, label }) => (
                 <MultiSelect
@@ -404,55 +468,10 @@ export const HomePage = () => {
                   onChange={(vals) => handleMultiFilterChange(key, vals)}
                   filterKey={key}
                   filterName={label}
+                  // Pass the custom sort order to your MultiSelect if it supports it
+                  customSortOrder={CUSTOM_SORT_ORDERS[key]}
                 />
               ))}
-            </div>
-          </section>
-
-          <section className="mb-4">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div className="flex-grow">
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                  Results Summary
-                </h2>
-                <p className="text-gray-600 text-sm">
-                  Showing{" "}
-                  <span className="font-medium text-gray-900">
-                    {filteredSurveyData.length}
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium text-gray-900">
-                    {surveys.length}
-                  </span>{" "}
-                  responses
-                </p>
-              </div>
-
-              <div className="w-full md:w-96">
-                <div className="relative">
-                  <input
-                    className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
-                    placeholder="Search graphs by title..."
-                    type="search"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-2">
-              <span
-                className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-lg border ${
-                  hasEnoughData
-                    ? "text-emerald-800 bg-emerald-50 border-emerald-200"
-                    : "text-amber-800 bg-amber-50 border-amber-200"
-                }`}
-              >
-                {hasEnoughData
-                  ? "✓ Sufficient data"
-                  : `⚠ Need ${MIN_SURVEY_COUNT}+ responses`}
-              </span>
             </div>
           </section>
         </div>
@@ -461,7 +480,7 @@ export const HomePage = () => {
           <div className="flex justify-center py-12 text-gray-600">
             Loading surveys...
           </div>
-        ) : filteredSurveyData.length === 0 ? (
+        ) : uniqueFilteredCount === 0 ? (
           <div className="text-center py-12 text-gray-500">
             No data found matching your filters.
           </div>
@@ -475,14 +494,13 @@ export const HomePage = () => {
                 />
               </div>
             )}
-
             {hasEnoughData ? (
               <section className="mb-12 mt-6">
                 <div className="space-y-8">
                   {currentGraphs.map((graph) => (
                     <div
                       key={graph.id}
-                      id={graph.id} // ID for Navbar scrolling
+                      id={graph.id}
                       className="bg-white border border-gray-200 rounded-lg shadow-sm scroll-mt-64 transition-all duration-500"
                     >
                       <GridItem
@@ -494,11 +512,6 @@ export const HomePage = () => {
                       </GridItem>
                     </div>
                   ))}
-                  {currentGraphs.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                      No graphs found for this search.
-                    </div>
-                  )}
                 </div>
               </section>
             ) : (

@@ -8,6 +8,7 @@ export const MultiSelect = ({
   onChange,
   filterKey,
   filterName,
+  customSortOrder, // NEW PROP: Receives the order from HomePage
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = useRef(null);
@@ -15,9 +16,29 @@ export const MultiSelect = ({
 
   // Option structure: {value, total, filtered}
   const getOptions = () => {
+    // 1. Get unique values
     const unique = Array.from(
       new Set(apiData.map((row) => row[filterKey]).filter(Boolean))
-    ).sort();
+    );
+
+    // 2. APPLY CUSTOM SORTING
+    unique.sort((a, b) => {
+      if (customSortOrder && customSortOrder.length > 0) {
+        const indexA = customSortOrder.indexOf(a);
+        const indexB = customSortOrder.indexOf(b);
+
+        // If both values are in the custom list, follow that order
+        if (indexA !== -1 && indexB !== -1) {
+          return indexA - indexB;
+        }
+        // If one isn't in the list (e.g. "Unspecified"), move it to the end
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+      }
+      // Fallback to alphabetical sorting
+      return a.toString().localeCompare(b.toString());
+    });
+
     return unique.map((value) => ({
       value,
       total: apiData.filter((row) => row[filterKey] === value).length,
@@ -25,6 +46,7 @@ export const MultiSelect = ({
         .length,
     }));
   };
+
   const options = getOptions();
 
   useEffect(() => {
@@ -59,7 +81,7 @@ export const MultiSelect = ({
   const clearAll = () => onChange([]);
 
   return (
-    <div className="relative w-full max-w-md" ref={dropdownRef}>
+    <div className="relative w-fit max-w-md" ref={dropdownRef}>
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}

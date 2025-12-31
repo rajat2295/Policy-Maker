@@ -21,18 +21,16 @@ const DEFAULT_USEFUL_ORDER = [
 const colorMapUseful = {
   "Not useful at all": "#34a0a4",
   "Not very useful": "#76c893",
-  "Somewhat useful": "#184e77",
-  "Very useful": "#168aad",
+  "Somewhat useful": "#168aad",
+  "Very useful": "#184e77",
 };
 
-// Helper to sort tooltip items
 const makeItemSorter = (order) => (item) => {
   if (!order) return 0;
   const idx = order.indexOf(item.name);
   return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
 };
 
-// Helper to render the legend
 const renderOrderedLegend = (order) => (props) => {
   const { payload } = props;
   if (!payload || !order) return null;
@@ -70,13 +68,10 @@ const renderOrderedLegend = (order) => (props) => {
   );
 };
 
-// NEW: Helper to calculate percentage safely
 const calcPercent = (val, total) => {
   if (!total || total === 0) return 0;
-  // Convert to percentage with 1 decimal place (e.g. 33.3)
   return parseFloat(((val / total) * 100).toFixed(1));
 };
-
 export const StackedGraph = ({
   data,
   graphType = "engagement",
@@ -98,7 +93,6 @@ export const StackedGraph = ({
     let frequency = {};
     let usefulFrequency = {};
 
-    // 1. Initialize counters
     reasons.forEach((reason) => {
       frequency[reason] = { 1: 0, 2: 0, 3: 0, 4: 0 };
       usefulFrequency[reason] = {
@@ -109,9 +103,7 @@ export const StackedGraph = ({
       };
     });
 
-    // 2. Count frequencies based on graph type
     if (graphType === "usefulEcon") {
-      // --- Count data for Useful Econ ---
       data.forEach((survey) => {
         reasons.forEach((reason) => {
           if (survey[reason]) {
@@ -121,19 +113,20 @@ export const StackedGraph = ({
         });
       });
 
-      // --- Convert to Percentages ---
       reasons.forEach((policy) => {
         const v1 = usefulFrequency[policy]["Somewhat useful"] || 0;
         const v2 = usefulFrequency[policy]["Very useful"] || 0;
         const v3 = usefulFrequency[policy]["Not very useful"] || 0;
         const v4 = usefulFrequency[policy]["Not useful at all"] || 0;
-
-        // Calculate total responses for this row
         const rowTotal = v1 + v2 + v3 + v4;
 
         temp.push({
           name: reasonMap[graphType][policy],
-          rawTotal: rowTotal, // Store raw total to use for sorting
+          totalCount: rowTotal, // SAVED: Sample size for tooltip
+          sortValue: calcPercent(
+            usefulFrequency[policy][usefulStackOrder[0]],
+            rowTotal
+          ),
           "Somewhat useful": calcPercent(v1, rowTotal),
           "Very useful": calcPercent(v2, rowTotal),
           "Not very useful": calcPercent(v3, rowTotal),
@@ -141,28 +134,25 @@ export const StackedGraph = ({
         });
       });
     } else {
-      // --- Count data for Engagement ---
       data.forEach((survey) => {
         reasons.forEach((reason) => {
-          if (!isNaN(survey[reason])) {
+          if (!isNaN(survey[reason]) && survey[reason] !== null) {
             frequency[reason][survey[reason]] =
               (frequency[reason][survey[reason]] || 0) + 1;
           }
         });
       });
 
-      // --- Convert to Percentages ---
       Object.keys(reasonMap[graphType]).forEach((reason) => {
         const v1 = frequency[reason][1] || 0;
         const v2 = frequency[reason][2] || 0;
         const v3 = frequency[reason][3] || 0;
-
-        // Calculate total responses for this row
         const rowTotal = v1 + v2 + v3;
 
         temp.push({
           name: reasonMap[graphType][reason],
-          rawTotal: rowTotal, // Store raw total to use for sorting
+          totalCount: rowTotal, // SAVED: Sample size for tooltip
+          sortValue: calcPercent(v1, rowTotal),
           "1st": calcPercent(v1, rowTotal),
           "2nd": calcPercent(v2, rowTotal),
           "3rd": calcPercent(v3, rowTotal),
@@ -170,56 +160,57 @@ export const StackedGraph = ({
       });
     }
 
-    // 3. Sort logic
-    // We sort by 'rawTotal' (number of votes) so the most popular items
-    // stay at the top, even though the bars are all 100% wide.
-    temp.sort((a, b) => (b.rawTotal || 0) - (a.rawTotal || 0));
-
+    temp.sort((a, b) => (b.sortValue || 0) - (a.sortValue || 0));
     setFilteredData(temp);
-  }, [data, graphType]);
+  }, [data, graphType, usefulStackOrder]);
 
   const graphHeight = size === "normal" ? 600 : 800;
 
   return (
     <ResponsiveContainer width="100%" height={graphHeight}>
       <BarChart
-        height={graphHeight}
-        width={"100%"}
         layout="vertical"
         data={filteredData}
-        margin={{
-          top: 20,
-          right: 30,
-          left: 50,
-          bottom: 5,
-        }}
+        margin={{ top: 20, right: 30, left: 50, bottom: 5 }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
-
-        {/* UPDATED: XAxis with % formatting and fixed domain */}
+        <CartesianGrid
+          strokeDasharray="3 3"
+          horizontal={true}
+          vertical={false}
+        />
         <XAxis
           type="number"
           domain={[0, 100]}
           tickFormatter={(val) => `${val.toFixed(0)}%`}
           tick={{ fill: "#1e293b", fontWeight: 600 }}
         />
-
         <YAxis
           dataKey="name"
           type="category"
           width={170}
-          tick={{ fill: "#1e293b", fontWeight: 600, fontSize: 15 }}
+          tick={{ fill: "#1e293b", fontWeight: 600, fontSize: 14 }}
         />
 
-        {/* UPDATED: Tooltip formatter to show % sign */}
+        {/* UPDATED: Tooltip labelFormatter shows "Name (n=X)" */}
         <Tooltip
+          // Robust formatter to handle the (n=X) label
+          labelFormatter={(label, items) => {
+            // Check if items exist and have a payload
+            if (items && items.length > 0 && items[0].payload) {
+              const { totalCount } = items[0].payload;
+              return `${label} (n=${totalCount})`;
+            }
+            return label;
+          }}
           formatter={(value) => `${value}%`}
           contentStyle={{
             backgroundColor: "white",
-            color: "black",
             borderRadius: 8,
-            border: "none",
+            color: "#1e293b",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
           }}
+          // Ensure the tooltip items stay in the correct stack order
           itemSorter={
             graphType === "usefulEcon" && usefulStackOrder
               ? makeItemSorter(usefulStackOrder)
@@ -236,18 +227,19 @@ export const StackedGraph = ({
         />
 
         {graphType === "usefulEcon" ? (
-          usefulStackOrder.map((label, index) => {
-            const isLast = index === usefulStackOrder.length - 1;
-            return (
-              <Bar
-                key={label}
-                dataKey={label}
-                stackId="a"
-                fill={colorMapUseful[label]}
-                radius={isLast ? [0, 6, 6, 0] : [0, 0, 0, 0]}
-              />
-            );
-          })
+          usefulStackOrder.map((label, index) => (
+            <Bar
+              key={label}
+              dataKey={label}
+              stackId="a"
+              fill={colorMapUseful[label]}
+              radius={
+                index === usefulStackOrder.length - 1
+                  ? [0, 6, 6, 0]
+                  : [0, 0, 0, 0]
+              }
+            />
+          ))
         ) : (
           <>
             <Bar dataKey="1st" stackId="a" fill="#184e77" />
@@ -255,7 +247,7 @@ export const StackedGraph = ({
             <Bar
               dataKey="3rd"
               stackId="a"
-              fill="#76c893 "
+              fill="#76c893"
               radius={[0, 6, 6, 0]}
             />
           </>
