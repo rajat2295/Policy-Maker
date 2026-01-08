@@ -55,15 +55,17 @@ export const Navbar = ({ searchTerm, setSearchTerm }) => {
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
           What policymakers value
         </h1>
-        <div className="w-full md:w-96">
-          <input
-            className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
-            placeholder="Search graphs by title..."
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        {user && (
+          <div className="w-full md:w-96">
+            <input
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
+              placeholder="Search graphs by title..."
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
 
         <nav className="flex flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
           {user && (
@@ -136,12 +138,20 @@ export const Navbar = ({ searchTerm, setSearchTerm }) => {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
+              >
+                Sign up
+              </Link>
+            </>
           )}
         </nav>
       </div>
