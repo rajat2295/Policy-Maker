@@ -109,7 +109,7 @@ export const MultiSelect = ({
                         e.stopPropagation();
                         removeValue(val);
                       }}
-                      className="ml-2 bg-gray-100 text-teal-600 hover:text-teal-800 hover:bg-teal-100 focus:outline-none focus:ring-1 focus:ring-teal-500 rounded transition-colors"
+                      className="ml-2 bg-gray-100 text-teal-600 hover:text-teal-800 hover:bg-black-100 focus:outline-none focus:ring-1 focus:ring-teal-500 rounded transition-colors"
                       aria-label={`Remove ${val} filter`}
                     >
                       {" "}

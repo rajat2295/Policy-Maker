@@ -8,8 +8,11 @@ import { SignUp } from "./pages/SignUp";
 import { Navbar } from "./components/Navbar";
 import { useAuthContext } from "./hooks/useAuthContext";
 import ReactGA from "react-ga4";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
 export const App = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
@@ -22,7 +25,7 @@ export const App = () => {
       style={{ width: "100vw", height: "100vh" }}
     >
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        <Navbar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         {/* <button className="btn" onClick={() => toast.success("Hello!")}></button>
       <button className="btn" onClick={() => toast.success("Hello!")}>
         Show Toast
@@ -30,7 +33,16 @@ export const App = () => {
         <Routes>
           <Route
             path="/"
-            element={user ? <HomePage /> : <Navigate to="/login" />}
+            element={
+              user ? (
+                <HomePage
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
           />
           <Route
             path="/login"

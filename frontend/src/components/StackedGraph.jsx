@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { reasonMap } from "../helpers/constants";
+import { DEFAULT_BAR_SIZE, reasonMap } from "../helpers/constants";
 
 const DEFAULT_USEFUL_ORDER = [
   "Not useful at all",
@@ -80,6 +80,7 @@ export const StackedGraph = ({
 }) => {
   const [filteredData, setFilteredData] = React.useState([]);
   const reasons = Object.keys(reasonMap[graphType]);
+  const grandTotal = data.length; // Total policymakers in the current filtered set
 
   const usefulStackOrder =
     graphType === "usefulEcon"
@@ -122,7 +123,7 @@ export const StackedGraph = ({
 
         temp.push({
           name: reasonMap[graphType][policy],
-          totalCount: rowTotal, // SAVED: Sample size for tooltip
+          totalCount: rowTotal,
           sortValue: calcPercent(
             usefulFrequency[policy][usefulStackOrder[0]],
             rowTotal
@@ -136,9 +137,15 @@ export const StackedGraph = ({
     } else {
       data.forEach((survey) => {
         reasons.forEach((reason) => {
-          if (!isNaN(survey[reason]) && survey[reason] !== null) {
-            frequency[reason][survey[reason]] =
-              (frequency[reason][survey[reason]] || 0) + 1;
+          if (
+            !isNaN(survey[reason]) &&
+            survey[reason] !== null &&
+            survey[reason] !== ""
+          ) {
+            const rank = Number(survey[reason]);
+            if (frequency[reason][rank] !== undefined) {
+              frequency[reason][rank]++;
+            }
           }
         });
       });
@@ -147,22 +154,21 @@ export const StackedGraph = ({
         const v1 = frequency[reason][1] || 0;
         const v2 = frequency[reason][2] || 0;
         const v3 = frequency[reason][3] || 0;
-        const rowTotal = v1 + v2 + v3;
 
         temp.push({
           name: reasonMap[graphType][reason],
-          totalCount: rowTotal, // SAVED: Sample size for tooltip
-          sortValue: calcPercent(v1, rowTotal),
-          "1st": calcPercent(v1, rowTotal),
-          "2nd": calcPercent(v2, rowTotal),
-          "3rd": calcPercent(v3, rowTotal),
+          totalCount: grandTotal, // Base of 100% is all policymakers
+          sortValue: calcPercent(v1, grandTotal),
+          "1st": calcPercent(v1, grandTotal),
+          "2nd": calcPercent(v2, grandTotal),
+          "3rd": calcPercent(v3, grandTotal),
         });
       });
     }
 
     temp.sort((a, b) => (b.sortValue || 0) - (a.sortValue || 0));
     setFilteredData(temp);
-  }, [data, graphType, usefulStackOrder]);
+  }, [data, graphType, usefulStackOrder, grandTotal]);
 
   const graphHeight = size === "normal" ? 600 : 800;
 
@@ -172,6 +178,7 @@ export const StackedGraph = ({
         layout="vertical"
         data={filteredData}
         margin={{ top: 20, right: 30, left: 50, bottom: 5 }}
+        barCategoryGap="25%"
       >
         <CartesianGrid
           strokeDasharray="3 3"
@@ -191,14 +198,11 @@ export const StackedGraph = ({
           tick={{ fill: "#1e293b", fontWeight: 600, fontSize: 14 }}
         />
 
-        {/* UPDATED: Tooltip labelFormatter shows "Name (n=X)" */}
         <Tooltip
-          // Robust formatter to handle the (n=X) label
           labelFormatter={(label, items) => {
-            // Check if items exist and have a payload
             if (items && items.length > 0 && items[0].payload) {
               const { totalCount } = items[0].payload;
-              return `${label} (n=${totalCount})`;
+              return `${label} (Total N=${totalCount})`;
             }
             return label;
           }}
@@ -210,7 +214,6 @@ export const StackedGraph = ({
             border: "1px solid #e2e8f0",
             boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
           }}
-          // Ensure the tooltip items stay in the correct stack order
           itemSorter={
             graphType === "usefulEcon" && usefulStackOrder
               ? makeItemSorter(usefulStackOrder)

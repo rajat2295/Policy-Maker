@@ -24,7 +24,6 @@ const CUSTOM_SORT_ORDERS = {
     "16-25 years",
     "26-35 years",
   ],
-  // Add others here if needed
 };
 
 const ALL_GRAPHS = [
@@ -245,12 +244,11 @@ const filterConfig = [
   { key: "derived_sector", label: "Working In" },
 ];
 
-export const HomePage = () => {
+export const HomePage = ({ searchTerm, setSearchTerm }) => {
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredSurveyData, setFilteredSurveyData] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
   const [filteredGraphTitles, setFilteredGraphTitles] = useState([]);
 
   const { user } = useAuthContext();
@@ -259,6 +257,20 @@ export const HomePage = () => {
   const [filterSelections, setFilterSelections] = useState(
     filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
   );
+
+  // Check if any filters are currently active
+  const hasActiveFilters = Object.values(filterSelections).some(
+    (selection) => selection.length > 0
+  );
+
+  const clearAllFilters = () => {
+    const cleared = filterConfig.reduce(
+      (obj, { key }) => ({ ...obj, [key]: [] }),
+      {}
+    );
+    setFilterSelections(cleared);
+    setFilteredSurveyData(surveys);
+  };
 
   useEffect(() => {
     const handleJump = (e) => {
@@ -304,7 +316,6 @@ export const HomePage = () => {
         );
 
         const processed = res.data.surveys.flatMap((survey) => {
-          // 1. Identify all individual "workin_" keys
           const activeSectors = Object.keys(survey)
             .filter(
               (key) =>
@@ -316,7 +327,6 @@ export const HomePage = () => {
               return raw.charAt(0).toUpperCase() + raw.slice(1);
             });
 
-          // 2. Robust Elected Status Check (Ensure this is calculated for EVERYONE)
           const val = survey.elected;
           const isElected =
             val === 1 ||
@@ -326,21 +336,19 @@ export const HomePage = () => {
               ? "Yes"
               : "No";
 
-          // 3. If they have sectors, return a row for each sector
           if (activeSectors.length > 0) {
             return activeSectors.map((sector) => ({
               ...survey,
               derived_sector: sector,
-              elected: isElected, // Explicitly pass the "Yes" or "No" here
+              elected: isElected,
             }));
           }
 
-          // 4. Fallback: If no sectors, still return the person with their Elected status
           return [
             {
               ...survey,
               derived_sector: "Unspecified",
-              elected: isElected, // Ensure "Yes" policymakers are not lost here
+              elected: isElected,
             },
           ];
         });
@@ -382,8 +390,6 @@ export const HomePage = () => {
     });
   };
 
-  // --- STATS LOGIC ---
-  // Count unique people (based on survey ID) to show accurate "Showing X of Y"
   const uniqueFilteredCount = new Set(
     filteredSurveyData.map((s) => s.id || s._id)
   ).size;
@@ -440,40 +446,42 @@ export const HomePage = () => {
           </div>
         </header>
 
-        <div className="sticky top-[64px] z-30 bg-white pt-4 pb-2 shadow-sm -mx-4 px-4 md:-mx-8 md:px-8 border-b">
-          <section className="mb-6">
+        <div className=" bg-white pt-2 pb-1 ">
+          <section className="mb-1">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <h2 className="text-2xl font-semibold text-gray-900">Filters</h2>
-              <div className="w-full md:w-96">
-                <input
-                  className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
-                  placeholder="Search graphs by title..."
-                  type="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-wrap gap-4">
-              {filterConfig.map(({ key, label }) => (
-                <MultiSelect
-                  key={key}
-                  apiData={surveys}
-                  filteredDataForCounts={getFilteredForFilter(
-                    surveys,
-                    filterSelections,
-                    key
-                  )}
-                  selectedValues={filterSelections[key]}
-                  onChange={(vals) => handleMultiFilterChange(key, vals)}
-                  filterKey={key}
-                  filterName={label}
-                  // Pass the custom sort order to your MultiSelect if it supports it
-                  customSortOrder={CUSTOM_SORT_ORDERS[key]}
-                />
-              ))}
             </div>
           </section>
+        </div>
+
+        {/* Sticky Filter Bar with Clear All Option */}
+        <div className="sticky top-[64px] z-30 bg-gray-50 rounded-lg p-6 border border-gray-200 flex flex-wrap items-center gap-4">
+          {filterConfig.map(({ key, label }) => (
+            <MultiSelect
+              key={key}
+              apiData={surveys}
+              filteredDataForCounts={getFilteredForFilter(
+                surveys,
+                filterSelections,
+                key
+              )}
+              selectedValues={filterSelections[key]}
+              onChange={(vals) => handleMultiFilterChange(key, vals)}
+              filterKey={key}
+              filterName={label}
+              customSortOrder={CUSTOM_SORT_ORDERS[key]}
+            />
+          ))}
+
+          {/* Clear All Button */}
+          {hasActiveFilters && (
+            <button
+              onClick={clearAllFilters}
+              className="px-4 py-2 text-sm  text-white hover:font-bold bg-red-600 border border-red-200 hover:border-red-600 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
 
         {loading ? (

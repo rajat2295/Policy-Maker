@@ -10,6 +10,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { CustomTooltip } from "./CustomTooltip";
+import { DEFAULT_BAR_SIZE } from "../helpers/constants";
 
 // Helper to compute median
 const calcMedian = (arr) => {
@@ -140,7 +141,12 @@ export const BarGraph = ({
                 width={140}
               />
               <Tooltip content={tooltipContent} />
-              <Bar dataKey="percentage" fill="#184e77" />
+              <Bar
+                radius={[0, 6, 6, 0]}
+                barSize={DEFAULT_BAR_SIZE}
+                dataKey="percentage"
+                fill="#184e77"
+              />
               {showReferenceLine && (
                 <ReferenceLine
                   x={median}
@@ -170,7 +176,12 @@ export const BarGraph = ({
                 tick={{ fontWeight: 500, fill: "#1e293b" }}
               />
               <Tooltip content={tooltipContent} />
-              <Bar dataKey="percentage" fill="#184e77" radius={[0, 6, 6, 0]} />
+              <Bar
+                barSize={DEFAULT_BAR_SIZE}
+                dataKey="percentage"
+                fill="#184e77"
+                radius={[0, 6, 6, 0]}
+              />
               {showReferenceLine && (
                 <ReferenceLine
                   y={median}

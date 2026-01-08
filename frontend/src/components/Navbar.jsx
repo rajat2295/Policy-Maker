@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom"; // Ensure correct router import
 import { useLogout } from "../hooks/useLogout";
 import { useAuthContext } from "../hooks/useAuthContext";
 
@@ -18,15 +18,17 @@ const GRAPHS_MAP = {
     { id: "policy-pref", title: "Policy Preferences" },
   ],
   1: [
+    { id: "learn-freq-tab1", title: "Learning Frequency (E)" },
     { id: "use-freq", title: "Usage Frequency" },
     { id: "open-mind", title: "Open-mindedness" },
-    { id: "engagement-barriers", title: "Engagement Barriers" },
+    { id: "engagement-reasons", title: "Engagement Barriers" }, // MATCHED ID
   ],
   2: [
     { id: "comm-rank-tab2", title: "Effectiveness Ranking" },
     { id: "reach-out-tab2", title: "Economist Outreach" },
   ],
   3: [
+    { id: "new-existing-tab3", title: "New vs Existing" },
     { id: "interdisciplinary", title: "Interdisciplinary Prefs" },
     { id: "meta-analysis", title: "Meta-analysis vs Novel" },
     { id: "useful-factors", title: "Usefulness Factors" },
@@ -34,7 +36,7 @@ const GRAPHS_MAP = {
   ],
 };
 
-export const Navbar = () => {
+export const Navbar = ({ searchTerm, setSearchTerm }) => {
   const { logout } = useLogout();
   const { user } = useAuthContext();
 
@@ -53,6 +55,15 @@ export const Navbar = () => {
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
           What policymakers value
         </h1>
+        <div className="w-full md:w-96">
+          <input
+            className="block w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:ring-slate-500 focus:border-slate-500"
+            placeholder="Search graphs by title..."
+            type="search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         <nav className="flex flex-row items-center gap-4 sm:gap-6 w-full sm:w-auto">
           {user && (
@@ -123,12 +134,6 @@ export const Navbar = () => {
               >
                 Logout
               </button>
-              <Link
-                to="/"
-                className="px-4 py-1 rounded-full font-medium hover:bg-slate-700"
-              >
-                Surveys
-              </Link>
             </>
           ) : (
             <Link

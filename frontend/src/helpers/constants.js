@@ -89,3 +89,5 @@ export const CUSTOM_SORT_ORDERS = {
   ],
   // Add others here if needed
 };
+
+export const DEFAULT_BAR_SIZE = 40;

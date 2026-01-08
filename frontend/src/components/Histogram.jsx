@@ -10,6 +10,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { CustomTooltip } from "./CustomTooltip";
+import { DEFAULT_BAR_SIZE } from "../helpers/constants";
 const calcMedian = (arr) => {
   if (!arr.length) return 0;
   const sorted = arr.slice().sort((a, b) => a - b);
@@ -125,7 +126,12 @@ export const Histogram = ({
         >
           <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="count" fill="#184e77" />
+          <Bar
+            radius={[6, 6, 0, 0]}
+            barSize={DEFAULT_BAR_SIZE}
+            dataKey="count"
+            fill="#184e77"
+          />
           <XAxis
             dataKey="name"
             type="number"
