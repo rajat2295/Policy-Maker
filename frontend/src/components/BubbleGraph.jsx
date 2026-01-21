@@ -11,6 +11,11 @@ import {
   ReferenceLine,
 } from "recharts";
 
+/**
+ * [EDITABLE_VALUE]: Ordinal Labels
+ * Functionality: These strings are mapped to numeric indices (0-5) to allow
+ * Recharts to calculate mathematical positioning on a scatter plot.
+ */
 const LABELS = [
   "Never",
   "Less than once a month",
@@ -22,12 +27,25 @@ const LABELS = [
 
 const labelToIndex = (label) => LABELS.indexOf(label);
 
+/**
+ * BubbleGraph Component
+ * [COMPONENT_DESCRIPTION]: A correlation matrix visualization.
+ * It compares "Actual" vs "Ideal" behavior.
+ * - Circles on the diagonal line mean behavior matches preference.
+ * - Circle size indicates the volume of participants in that specific intersection.
+ */
 export const BubbleGraph = ({
   data,
-  xKey = "how_often_learn",
-  yKey = "if_changes_how_often",
+  xKey = "how_often_learn", // [EDITABLE_VALUE]: Raw data key for horizontal axis
+  yKey = "if_changes_how_often", // [EDITABLE_VALUE]: Raw data key for vertical axis
 }) => {
-  // 1. Map string data to numeric indices (0 to 5)
+  /**
+   * [DATA_TRANSFORMATION_LOGIC]: Matrix Aggregation
+   * Functionality:
+   * 1. Creates a unique key for every possible intersection (e.g., "Never||Once a week").
+   * 2. Counts how many survey rows match that specific intersection.
+   * 3. Flattens the matrix into an array of objects that include xIndex and yIndex.
+   */
   const chartData = useMemo(() => {
     const counts = {};
     data.forEach((row) => {
@@ -45,15 +63,15 @@ export const BubbleGraph = ({
         return {
           xLabel,
           yLabel,
-          xIndex: labelToIndex(xLabel), // We will plot these numbers
-          yIndex: labelToIndex(yLabel), // We will plot these numbers
+          xIndex: labelToIndex(xLabel),
+          yIndex: labelToIndex(yLabel),
           count: counts[key] || 0,
         };
       })
     );
   }, [data, xKey, yKey]);
 
-  // Create array of indices [0, 1, 2, 3, 4, 5] for ticks
+  // Functionality: Generates [0, 1, 2, 3, 4, 5] to position the axis ticks
   const ticks = LABELS.map((_, i) => i);
 
   return (
@@ -62,7 +80,9 @@ export const BubbleGraph = ({
         <ScatterChart margin={{ top: 40, right: 20, bottom: 30, left: 50 }}>
           <CartesianGrid />
 
-          {/* 2. Use type="number" and format the ticks back to strings */}
+          {/* X-Axis Functionality: 
+              Translates the internal index (0-5) back into human-readable strings for the UI. 
+          */}
           <XAxis
             type="number"
             dataKey="xIndex"
@@ -72,7 +92,7 @@ export const BubbleGraph = ({
             tick={{ fontWeight: 600 }}
             interval={0}
             label={{
-              value: "Current frequency of learning about research",
+              value: "Current frequency of learning about research", // [CONFIGURABLE_TEXT]
               position: "bottom",
               offset: 17,
             }}
@@ -87,47 +107,58 @@ export const BubbleGraph = ({
             tick={{ fontWeight: 600 }}
             interval={0}
             label={{
-              value: "Frequency if research matched preferences",
+              value: "Frequency if research matched preferences", // [CONFIGURABLE_TEXT]
               angle: -90,
               position: "insideLeft",
               offset: -18,
             }}
           />
 
+          {/* [Z-AXIS_LOGIC]: Bubble Scaling
+              Functionality: 'range' defines the [min, max] size of the circles in pixels.
+              'count' determines where in that range a specific bubble falls.
+          */}
           <ZAxis
             type="number"
             dataKey="count"
-            range={[60, 400]}
+            range={[60, 400]} // [EDITABLE_VALUE]: Adjust for smaller/larger bubbles
             name="People"
           />
 
           <Tooltip
             cursor={{ strokeDasharray: "3 3" }}
-            formatter={(value, name, props) => {
+            formatter={(value, name) => {
               if (name === "count") return [`${value}`, "Responses"];
-              // For X and Y tooltip values, convert index back to label
-              if (name === "Current Frequency") return LABELS[value];
-              if (name === "If Matched Preferences") return LABELS[value];
+              // Logic: Reverse mapping index back to text for the tooltip display
+              if (
+                name === "Current Frequency" ||
+                name === "If Matched Preferences"
+              )
+                return LABELS[value];
               return value;
             }}
             contentStyle={{ fontWeight: 600 }}
           />
 
-          {/* 3. Reference line now uses simple coordinates from 0,0 to 5,5 */}
+          {/* [REFERENCE_LINE]: The "Equilibrium" Line
+              Functionality: Draws a 45-degree line. 
+              Bubbles above the line want MORE frequency than they have.
+              Bubbles below the line want LESS frequency than they have.
+          */}
           <ReferenceLine
             segment={[
               { x: 0, y: 0 },
               { x: 5, y: 5 },
             ]}
             stroke="black"
-            strokeWidth={1} // Made it slightly thicker
+            strokeWidth={1}
             ifOverflow="extendDomain"
           />
 
           <Scatter
-            data={chartData.filter((d) => d.count > 0)}
+            data={chartData.filter((d) => d.count > 0)} // Optimization: Don't render empty bubbles
             shape="circle"
-            fill="#2d6cdf"
+            fill="#2d6cdf" // [EDITABLE_VALUE]: Bubble color
           />
         </ScatterChart>
       </ResponsiveContainer>

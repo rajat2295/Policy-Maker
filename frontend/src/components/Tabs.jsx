@@ -1,22 +1,34 @@
 import React from "react";
 
-export const DashboardTabs = ({ activeTab, setActiveTab }) => (
+/**
+ * DashboardTabs Component
+ * [COMPONENT_DESCRIPTION]: The primary navigation for the dashboard.
+ * It manages which group of graphs is currently rendered.
+ * Built with full ARIA support for screen readers and keyboard accessibility.
+ */
+export const DashboardTabs = ({
+  activeTab, // Functionality: The current numeric ID of the active section
+  setActiveTab, // Functionality: State setter to switch sections
+}) => (
   <nav
-    role="tablist"
+    role="tablist" // [ACCESSIBILITY]: Informs screen readers this is a tabbed interface
     aria-label="Dashboard sections"
     className="flex gap-2 mb-7"
     style={{ borderBottom: "2px solid #e5e7eb" }}
   >
     {[
-      { label: "Highlights", id: 0 },
+      { label: "Highlights", id: 0 }, // [EDITABLE_VALUE]: Tab labels and indices
       { label: "Evidence", id: 1 },
       { label: "Communication", id: 2 },
       { label: "Type", id: 3 },
     ].map((tab) => (
       <button
         type="button"
-        role="tab"
+        role="tab" // [ACCESSIBILITY]: Identifies individual buttons as tabs
         aria-selected={activeTab === tab.id}
+        /* Functionality: Only the active tab can be reached via 'Tab' key. 
+           Others are reached via Arrow keys (managed in onKeyDown). 
+        */
         tabIndex={activeTab === tab.id ? 0 : -1}
         key={tab.id}
         className={`
@@ -27,7 +39,7 @@ export const DashboardTabs = ({ activeTab, setActiveTab }) => (
           border border-b-0 border-gray-200
           ${
             activeTab === tab.id
-              ? "bg-emerald-700 text-white shadow"
+              ? "bg-emerald-700 text-white shadow" // [EDITABLE_VALUE]: Active color theme
               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
           }
         `}
@@ -39,12 +51,18 @@ export const DashboardTabs = ({ activeTab, setActiveTab }) => (
           outline: "none",
         }}
         onClick={() => setActiveTab(tab.id)}
+        /**
+         * [UX_LOGIC]: Arrow Key Navigation
+         * Functionality: Implements standard tab behavior.
+         * Users can cycle through "Highlights" -> "Type" using Arrow keys.
+         * Note: The current logic (mod 3) should likely be (mod 4) to match the number of tabs.
+         */
         onKeyDown={(e) => {
           if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-            setActiveTab((activeTab + 1) % 3);
+            setActiveTab((activeTab + 1) % 4);
           }
           if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-            setActiveTab((activeTab + 2) % 3);
+            setActiveTab((activeTab + 3) % 4);
           }
         }}
       >

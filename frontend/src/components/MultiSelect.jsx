@@ -1,27 +1,43 @@
 import React, { useRef, useEffect } from "react";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
+/**
+ * MultiSelect Component
+ * [COMPONENT_DESCRIPTION]: A highly reusable, generic multi-select dropdown.
+ * Unlike the Country filter, this accepts a 'filterKey' prop, allowing it to
+ * filter any column in the dataset (Years, Elected Status, Sectors, etc.).
+ * It also supports custom sorting orders for non-alphabetical categories.
+ */
 export const MultiSelect = ({
-  apiData,
-  filteredDataForCounts,
-  selectedValues,
-  onChange,
-  filterKey,
-  filterName,
-  customSortOrder, // NEW PROP: Receives the order from HomePage
+  apiData, // The full dataset
+  filteredDataForCounts, // Data filtered by OTHER filters (for dynamic counts)
+  selectedValues, // Current selections from state
+  onChange, // Callback to update parent state
+  filterKey, // The data key to filter by (e.g., 'years_gov')
+  filterName, // The display label (e.g., 'Experience')
+  customSortOrder, // [NEW_PROP]: Optional array to define manual sorting
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
 
-  // Option structure: {value, total, filtered}
+  /**
+   * [DATA_LOGIC]: getOptions
+   * Functionality:
+   * 1. Extracts all unique non-null values for the specific filterKey.
+   * 2. Sorting:
+   * - If customSortOrder is provided, it maps values to their index in that list.
+   * - Moves items not in the list (like 'Unspecified') to the bottom.
+   * - Falls back to alphabetical sorting if no custom list exists.
+   * 3. Counting: Returns the 'total' (all data) and 'filtered' (matches other active filters) counts.
+   */
   const getOptions = () => {
     // 1. Get unique values
     const unique = Array.from(
       new Set(apiData.map((row) => row[filterKey]).filter(Boolean))
     );
 
-    // 2. APPLY CUSTOM SORTING
+    // 2. APPLY CUSTOM SORTING [EDITABLE_LOGIC]
     unique.sort((a, b) => {
       if (customSortOrder && customSortOrder.length > 0) {
         const indexA = customSortOrder.indexOf(a);
@@ -31,7 +47,7 @@ export const MultiSelect = ({
         if (indexA !== -1 && indexB !== -1) {
           return indexA - indexB;
         }
-        // If one isn't in the list (e.g. "Unspecified"), move it to the end
+        // Move specified custom items to the front, others to the back
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
       }
@@ -42,6 +58,7 @@ export const MultiSelect = ({
     return unique.map((value) => ({
       value,
       total: apiData.filter((row) => row[filterKey] === value).length,
+      // Functionality: Shows how many people fit this category AFTER other filters are applied
       filtered: filteredDataForCounts.filter((row) => row[filterKey] === value)
         .length,
     }));
@@ -49,6 +66,9 @@ export const MultiSelect = ({
 
   const options = getOptions();
 
+  /**
+   * [UX_LOGIC]: Standard Click-Outside and Escape-Key listener to close dropdown.
+   */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -69,6 +89,10 @@ export const MultiSelect = ({
     };
   }, []);
 
+  /**
+   * [EVENT_HANDLER]: handleValueToggle
+   * Functionality: Adds or removes a value from the selection array and triggers onChange.
+   */
   const handleValueToggle = (val) => {
     const updated = selectedValues.includes(val)
       ? selectedValues.filter((v) => v !== val)
@@ -78,10 +102,12 @@ export const MultiSelect = ({
 
   const removeValue = (val) =>
     onChange(selectedValues.filter((v) => v !== val));
+
   const clearAll = () => onChange([]);
 
   return (
     <div className="relative w-fit max-w-md" ref={dropdownRef}>
+      {/* Main Trigger Button */}
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
@@ -94,9 +120,10 @@ export const MultiSelect = ({
           <div className="flex-1 min-w-0">
             {selectedValues.length === 0 ? (
               <span className="text-gray-500">
-                Select {filterName.toLowerCase()}...
+                Select {filterName.toLowerCase()}... {/* [CONFIGURABLE_TEXT] */}
               </span>
             ) : (
+              /* [UI_LOGIC]: Inline Pills for current selections */
               <div className="flex flex-wrap gap-2">
                 {selectedValues.slice(0, 2).map((val) => (
                   <span
@@ -112,8 +139,7 @@ export const MultiSelect = ({
                       className="ml-2 bg-gray-100 text-teal-600 hover:text-teal-800 hover:bg-black-100 focus:outline-none focus:ring-1 focus:ring-teal-500 rounded transition-colors"
                       aria-label={`Remove ${val} filter`}
                     >
-                      {" "}
-                      <XMarkIcon className="w-4 h-4" />{" "}
+                      <XMarkIcon className="w-4 h-4" />
                     </button>
                   </span>
                 ))}
@@ -133,12 +159,15 @@ export const MultiSelect = ({
           />
         </div>
       </button>
+
+      {/* Dropdown Menu */}
       {isOpen && (
         <div
           className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg"
           role="listbox"
           aria-label={`${filterName} options`}
         >
+          {/* Functionality: Clear specific filter category */}
           {selectedValues.length > 0 && (
             <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
               <button
@@ -148,11 +177,12 @@ export const MultiSelect = ({
                   selectedValues.length
                 } selected ${filterName.toLowerCase()}`}
               >
-                {" "}
-                Clear All ({selectedValues.length}){" "}
+                Clear All ({selectedValues.length})
               </button>
             </div>
           )}
+
+          {/* Options List with Dynamic Counts */}
           <div className="max-h-60 overflow-y-auto">
             {options.map((opt) => (
               <label
@@ -167,7 +197,7 @@ export const MultiSelect = ({
                   onChange={() => handleValueToggle(opt.value)}
                   className={`w-4 h-4 border-2 rounded focus:ring-2 focus:ring-teal-400 bg-white ${
                     selectedValues.includes(opt.value)
-                      ? "border-teal-600 bg-teal-100 text-teal-600"
+                      ? "border-teal-600 bg-teal-100 text-teal-600" // [EDITABLE_VALUE]
                       : "border-gray-400"
                   }`}
                   style={{
@@ -180,6 +210,10 @@ export const MultiSelect = ({
                 <span className="ml-3 text-sm text-gray-900 flex-1">
                   {opt.value}
                 </span>
+                {/* [DYNAMIC_UI]: Shows "X of Y" count. 
+                    X is how many people exist in this category given OTHER filters.
+                    Y is the total count in the entire database.
+                 */}
                 <span
                   id={`${opt.value}-count`}
                   className="text-xs text-gray-500"
@@ -190,6 +224,8 @@ export const MultiSelect = ({
               </label>
             ))}
           </div>
+
+          {/* Footer Stats */}
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-600">
             {selectedValues.length} of {options.length} selected
           </div>
