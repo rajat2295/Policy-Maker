@@ -337,7 +337,8 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
           }
         );
 
-        const processed = res.data.surveys.flatMap((survey) => {
+        const processed = res.data.surveys.map((survey) => {
+          // 1. Identify active sectors but keep them in an ARRAY
           const activeSectors = Object.keys(survey)
             .filter(
               (key) =>
@@ -349,30 +350,23 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
               return raw.charAt(0).toUpperCase() + raw.slice(1);
             });
 
+          // 2. Normalize Elected status
           const val = survey.elected;
           const isElected =
             val === 1 ||
             val === "1" ||
             val === true ||
             (typeof val === "string" && val.toLowerCase().trim() === "yes")
-              ? "Yes" // [CONFIGURABLE_TEXT]
-              : "No"; // [CONFIGURABLE_TEXT]
+              ? "Yes"
+              : "No";
 
-          if (activeSectors.length > 0) {
-            return activeSectors.map((sector) => ({
-              ...survey,
-              derived_sector: sector,
-              elected: isElected,
-            }));
-          }
-
-          return [
-            {
-              ...survey,
-              derived_sector: "Unspecified", // [CONFIGURABLE_TEXT]
-              elected: isElected,
-            },
-          ];
+          // 3. RETURN ONE ROW PER PERSON
+          return {
+            ...survey,
+            derived_sector:
+              activeSectors.length > 0 ? activeSectors : ["Unspecified"],
+            elected: isElected,
+          };
         });
 
         setSurveys(processed);
@@ -389,10 +383,18 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
   // Functionality: Logic to filter the survey array by checking if each row matches ALL active filter categories.
   const applyAllFilters = (data, selections) =>
     data.filter((row) =>
-      filterConfig.every(
-        ({ key }) =>
-          !selections[key].length || selections[key].includes(row[key])
-      )
+      filterConfig.every(({ key }) => {
+        const selectedItems = selections[key];
+        if (!selectedItems.length) return true;
+
+        const rowValue = row[key];
+        // Logic: If the data is an array (sectors), check for intersection
+        if (Array.isArray(rowValue)) {
+          return rowValue.some((val) => selectedItems.includes(val));
+        }
+        // Standard match for Country, Years, etc.
+        return selectedItems.includes(rowValue);
+      })
     );
 
   // Functionality: Calculates counts for a specific filter while ignoring its own selections.

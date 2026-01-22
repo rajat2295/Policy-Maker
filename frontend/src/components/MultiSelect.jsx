@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
-
+import { isValid } from "../helpers/helper.js";
 /**
  * MultiSelect Component
  * [COMPONENT_DESCRIPTION]: A highly reusable, generic multi-select dropdown.
@@ -20,7 +20,7 @@ export const MultiSelect = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
-
+  if (filterKey === "country_final") console.log(selectedValues);
   /**
    * [DATA_LOGIC]: getOptions
    * Functionality:
@@ -32,36 +32,50 @@ export const MultiSelect = ({
    * 3. Counting: Returns the 'total' (all data) and 'filtered' (matches other active filters) counts.
    */
   const getOptions = () => {
-    // 1. Get unique values
-    const unique = Array.from(
-      new Set(apiData.map((row) => row[filterKey]).filter(Boolean))
-    );
+    // 1. Get unique values, filtering out blanks
+    // For derived_sector, we flatMap to get individual sectors out of arrays
+    const rawValues = apiData.flatMap((row) => {
+      const val = row[filterKey];
+      if (!isValid(val)) return [];
+      return filterKey === "derived_sector" && Array.isArray(val) ? val : [val];
+    });
 
-    // 2. APPLY CUSTOM SORTING [EDITABLE_LOGIC]
+    const unique = Array.from(new Set(rawValues));
+
+    // 2. Sort Logic (remains the same)
     unique.sort((a, b) => {
       if (customSortOrder && customSortOrder.length > 0) {
         const indexA = customSortOrder.indexOf(a);
         const indexB = customSortOrder.indexOf(b);
-
-        // If both values are in the custom list, follow that order
-        if (indexA !== -1 && indexB !== -1) {
-          return indexA - indexB;
-        }
-        // Move specified custom items to the front, others to the back
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
       }
-      // Fallback to alphabetical sorting
-      return a.toString().localeCompare(b.toString());
+      return String(a).localeCompare(String(b));
     });
 
-    return unique.map((value) => ({
-      value,
-      total: apiData.filter((row) => row[filterKey] === value).length,
-      // Functionality: Shows how many people fit this category AFTER other filters are applied
-      filtered: filteredDataForCounts.filter((row) => row[filterKey] === value)
-        .length,
-    }));
+    // 3. Counting Logic [UPDATED FOR MULTI-VALUE SUPPORT]
+    return unique.map((value) => {
+      // Inside MultiSelect.js -> getOptions
+      const countMatch = (row) => {
+        const rowVal = row[filterKey];
+        if (!isValid(rowVal)) return false;
+
+        // If the data in the row is an array (our new derived_sector format)
+        if (Array.isArray(rowVal)) {
+          return rowVal.includes(value);
+        }
+
+        // Standard equality for single-value filters
+        return rowVal === value;
+      };
+
+      return {
+        value,
+        total: apiData.filter(countMatch).length,
+        filtered: filteredDataForCounts.filter(countMatch).length,
+      };
+    });
   };
 
   const options = getOptions();
