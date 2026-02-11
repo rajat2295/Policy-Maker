@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import { Route, Routes } from "react-router";
 import { Navigate } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
@@ -17,8 +17,11 @@ export const App = () => {
   useEffect(() => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+  }, []);
+  useEffect(() => {
     user
-      ? ReactGA.event({
+      ? console.log("User logged in:", user.email) &&
+        ReactGA.event({
           category: "user",
           action: "logged in",
           label: user.email, // optional
@@ -27,7 +30,8 @@ export const App = () => {
           transport: "xhr", // optional, beacon/xhr/image
         })
       : "";
-  }, []);
+  }, [user]);
+
   return (
     <div
       data-theme="coffee"
