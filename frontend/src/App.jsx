@@ -23,18 +23,6 @@ export const App = () => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
   }, []);
-  useEffect(() => {
-    user
-      ? ReactGA.event({
-          category: "user",
-          action: user.email,
-          label: user.email, // optional
-          value: 1, // optional, must be a number
-          nonInteraction: true, // optional, true/false
-          transport: "xhr", // optional, beacon/xhr/image
-        })
-      : "";
-  }, [user]);
 
   return (
     <div
