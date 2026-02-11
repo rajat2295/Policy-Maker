@@ -13,17 +13,21 @@ import { useEffect, useState } from "react";
 export const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuthContext();
-
+  const tabs = [
+    { label: "Highlights", id: 0 },
+    { label: "Evidence", id: 1 },
+    { label: "Communication", id: 2 },
+    { label: "Type", id: 3 },
+  ];
   useEffect(() => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
   }, []);
   useEffect(() => {
     user
-      ? console.log("User logged in:", user.email) &&
-        ReactGA.event({
+      ? ReactGA.event({
           category: "user",
-          action: "logged in",
+          action: user.email,
           label: user.email, // optional
           value: 1, // optional, must be a number
           nonInteraction: true, // optional, true/false
@@ -58,6 +62,24 @@ export const App = () => {
               )
             }
           />
+          {tabs.map((tab) => (
+            <Route
+              key={tab.id}
+              path={`/${tab.label.toLowerCase()}`}
+              element={
+                user ? (
+                  <HomePage
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    activeTab={tab.id}
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+          ))}
+
           <Route
             path="/login"
             element={!user ? <Login /> : <Navigate to="/" />}

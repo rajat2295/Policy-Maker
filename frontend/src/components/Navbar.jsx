@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom"; // Ensure correct router import
 import { useLogout } from "../hooks/useLogout";
 import { useAuthContext } from "../hooks/useAuthContext";
-
+import { useNavigate } from "react-router-dom"; // For programmatic navigation
 /**
  * [EDITABLE_VALUE]: Navigation Tab Labels
  * Functionality: These labels correspond to the tabs in the DashboardTabs component.
@@ -56,6 +56,7 @@ const GRAPHS_MAP = {
 export const Navbar = ({ searchTerm, setSearchTerm }) => {
   const { logout } = useLogout();
   const { user } = useAuthContext();
+  const navigate = useNavigate();
 
   const handleLogout = () => logout();
 
@@ -141,7 +142,10 @@ export const Navbar = ({ searchTerm, setSearchTerm }) => {
                       {GRAPHS_MAP[cat.id]?.map((g) => (
                         <button
                           key={g.id}
-                          onClick={() => goToGraph(cat.id, g.id)}
+                          onClick={() => {
+                            goToGraph(cat.id, g.id);
+                            navigate(`/${cat.label.toLowerCase()}`);
+                          }} // [NAV_LOGIC]: Dispatch jump-to event and navigate to the tab route
                           className="w-full text-left px-4 py-2 text-sm hover:bg-emerald-700 hover:text-white transition-colors"
                         >
                           {g.title}

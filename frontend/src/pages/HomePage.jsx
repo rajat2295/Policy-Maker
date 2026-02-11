@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import axios from "axios";
 import { GridItem } from "../components/GridItem";
 import { BarGraph } from "../components/BarGraph";
@@ -252,7 +252,7 @@ const filterConfig = [
   { key: "derived_sector", label: "Working In" },
 ];
 
-export const HomePage = ({ searchTerm, setSearchTerm }) => {
+export const HomePage = ({ searchTerm, defaultActiveTab = 0 }) => {
   // State Functionality:
   // - surveys: The raw/processed data from the database.
   // - filteredSurveyData: The subset of data that matches current user filters.
@@ -268,19 +268,19 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
 
   // Initialization: Creates an empty array for each filter key defined in filterConfig.
   const [filterSelections, setFilterSelections] = useState(
-    filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {})
+    filterConfig.reduce((obj, { key }) => ({ ...obj, [key]: [] }), {}),
   );
 
   // Functionality: Returns true if the user has applied any filtering criteria.
   const hasActiveFilters = Object.values(filterSelections).some(
-    (selection) => selection.length > 0
+    (selection) => selection.length > 0,
   );
 
   // Functionality: Resets all filter arrays to empty and restores the full dataset to the view.
   const clearAllFilters = () => {
     const cleared = filterConfig.reduce(
       (obj, { key }) => ({ ...obj, [key]: [] }),
-      {}
+      {},
     );
     setFilterSelections(cleared);
     setFilteredSurveyData(surveys);
@@ -299,7 +299,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
           element.classList.add("ring-4", "ring-emerald-500/20");
           setTimeout(
             () => element.classList.remove("ring-4", "ring-emerald-500/20"),
-            2000
+            2000,
           );
         }
       }, 300);
@@ -313,13 +313,17 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
     if (searchTerm) {
       const lowerCaseSearch = searchTerm.toLowerCase();
       const results = ALL_GRAPHS.filter((graph) =>
-        graph.title.toLowerCase().includes(lowerCaseSearch)
+        graph.title.toLowerCase().includes(lowerCaseSearch),
       );
       setFilteredGraphTitles(results);
     } else {
       setFilteredGraphTitles([]);
     }
   }, [searchTerm]);
+
+  useEffect(() => {
+    setActiveTab(defaultActiveTab);
+  }, [defaultActiveTab]);
 
   // Functionality: The core Data Pipeline.
   // 1. Fetches data from the API.
@@ -334,7 +338,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
           `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/surveys`,
           {
             headers: { Authorization: `Bearer ${user.token}` },
-          }
+          },
         );
 
         const processed = res.data.surveys.map((survey) => {
@@ -343,7 +347,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
             .filter(
               (key) =>
                 key.startsWith("workin_") &&
-                (Number(survey[key]) === 1 || survey[key] === "1")
+                (Number(survey[key]) === 1 || survey[key] === "1"),
             )
             .map((key) => {
               const raw = key.replace("workin_", "").replace(/_/g, " ");
@@ -394,7 +398,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
         }
         // Standard match for Country, Years, etc.
         return selectedItems.includes(rowValue);
-      })
+      }),
     );
 
   // Functionality: Calculates counts for a specific filter while ignoring its own selections.
@@ -406,8 +410,8 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
         ({ key }) =>
           key === excludeKey ||
           !selections[key].length ||
-          selections[key].includes(row[key])
-      )
+          selections[key].includes(row[key]),
+      ),
     );
 
   // Functionality: Updates the state when a user toggles a filter and immediately triggers the re-filtering of data.
@@ -422,7 +426,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
   // Functionality: Statistical calculations to show "Showing X of Y".
   // Uses a Set on IDs to ensure we count unique people, not the "flattened" sector rows.
   const uniqueFilteredCount = new Set(
-    filteredSurveyData.map((s) => s.id || s._id)
+    filteredSurveyData.map((s) => s.id || s._id),
   ).size;
   const uniqueTotalCount = new Set(surveys.map((s) => s.id || s._id)).size;
   const hasEnoughData = uniqueFilteredCount >= MIN_SURVEY_COUNT;
@@ -489,7 +493,7 @@ export const HomePage = ({ searchTerm, setSearchTerm }) => {
               filteredDataForCounts={getFilteredForFilter(
                 surveys,
                 filterSelections,
-                key
+                key,
               )}
               selectedValues={filterSelections[key]}
               onChange={(vals) => handleMultiFilterChange(key, vals)}
