@@ -12,12 +12,22 @@ import { useEffect, useState } from "react";
 
 export const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuthContext();
 
   useEffect(() => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+    user
+      ? ReactGA.event({
+          category: "user",
+          action: "logged in",
+          label: user.email, // optional
+          value: 1, // optional, must be a number
+          nonInteraction: true, // optional, true/false
+          transport: "xhr", // optional, beacon/xhr/image
+        })
+      : "";
   }, []);
-  const { user } = useAuthContext();
   return (
     <div
       data-theme="coffee"
