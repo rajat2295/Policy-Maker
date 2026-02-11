@@ -20,7 +20,6 @@ export const MultiSelect = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
-  if (filterKey === "country_final") console.log(selectedValues);
   /**
    * [DATA_LOGIC]: getOptions
    * Functionality:
