@@ -21,10 +21,6 @@ export const App = () => {
     { label: "Type", id: 3 },
   ];
   useEffect(() => {
-    console.log(
-      "Identifying user in PostHog:",
-      user?.email || "anonymous_user",
-    );
     posthog.identify(
       user?.email || "anonymous_user", // Replace 'distinct_id' with your user's unique identifier
       { email: user?.email || "anonymous_user" }, // optional: set additional person properties
