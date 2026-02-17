@@ -9,6 +9,7 @@ import { Navbar } from "./components/Navbar";
 import { useAuthContext } from "./hooks/useAuthContext";
 import ReactGA from "react-ga4";
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 
 export const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +20,16 @@ export const App = () => {
     { label: "Communication", id: 2 },
     { label: "Type", id: 3 },
   ];
+  useEffect(() => {
+    console.log(
+      "Identifying user in PostHog:",
+      user?.email || "anonymous_user",
+    );
+    posthog.identify(
+      user?.email || "anonymous_user", // Replace 'distinct_id' with your user's unique identifier
+      { email: user?.email || "anonymous_user" }, // optional: set additional person properties
+    );
+  }, [user?.email]);
   useEffect(() => {
     ReactGA.initialize(import.meta.env.VITE_GA_MEASUREMENT_ID);
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
